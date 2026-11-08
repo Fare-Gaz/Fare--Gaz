@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fare Gaz — Livraison de gaz à domicile</title>
+  <meta name="description" content="Commande ta bouteille de gaz et fais-la livrer à domicile à Tahiti : géolocalisation, branchement, paiement à la livraison, en français et en reo tahiti.">
+  <meta name="theme-color" content="#0e7c86">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="saut" href="#contenu">Aller au contenu</a>
+
+  <header class="entete">
+    <div class="marque">
+      <img src="icons/icon.svg" alt="" class="logo">
+      <div>
+        <h1 id="nom-app">Fare Gaz</h1>
+        <p class="slogan" data-t="slogan"></p>
+      </div>
+    </div>
+    <div class="outils" role="toolbar" aria-label="Réglages d'affichage">
+      <div class="langues" role="group" aria-label="Langue">
+        <button type="button" data-langue="fr" aria-pressed="true">FR</button>
+        <button type="button" data-langue="ty" aria-pressed="false">TY</button>
+        <button type="button" data-langue="both" aria-pressed="false">FR + TY</button>
+      </div>
+      <button type="button" id="btn-facile" class="outil" aria-pressed="false"><span aria-hidden="true">Aa</span> <span data-t="btnFacile"></span></button>
+      <button type="button" id="btn-ecouter" class="outil"><span aria-hidden="true">🔊</span> <span data-t="btnEcouter"></span></button>
+      <button type="button" id="btn-aide" class="outil aide-btn"><span aria-hidden="true">📞</span> <span data-t="btnAide"></span></button>
+    </div>
+    <div class="bordure" aria-hidden="true"></div>
+  </header>
+
+  <p id="bandeau-ty" class="bandeau-ty" hidden data-t="bandeauTy"></p>
+
+  <main id="contenu">
+    <!-- ===================== COMMANDER ===================== -->
+    <section id="v-commander" class="vue active" aria-labelledby="t-accueil">
+      <div class="accueil">
+        <svg class="illus" viewBox="0 0 360 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9a8"/><stop offset="1" stop-color="#fff4e3"/></linearGradient>
+          </defs>
+          <rect width="360" height="120" fill="url(#ciel)"/>
+          <circle cx="292" cy="40" r="18" fill="#f9b45a"/>
+          <path d="M0 88 L60 40 L95 62 L150 18 L210 70 L250 50 L300 84 L360 60 V120 H0Z" fill="#3f8f5a"/>
+          <path d="M0 96 L70 64 L120 82 L180 52 L240 86 L360 76 V120 H0Z" fill="#2e7448"/>
+          <rect y="98" width="360" height="22" fill="#42b7c0"/>
+          <path d="M0 104 Q30 100 60 104 T120 104 T180 104 T240 104 T300 104 T360 104" stroke="#bfeef0" stroke-width="2" fill="none"/>
+          <g transform="translate(206 66)">
+            <path d="M0 18 L22 0 L44 18Z" fill="#a8693a"/>
+            <path d="M-2 18 L46 18 L42 14 L2 14Z" fill="#8a5530"/>
+            <rect x="5" y="18" width="34" height="18" fill="#e9d2a6"/>
+            <rect x="18" y="24" width="8" height="12" fill="#8a5530"/>
+          </g>
+          <g transform="translate(52 76)">
+            <circle cx="0" cy="0" r="5" fill="#fff"/><circle cx="7" cy="-3" r="5" fill="#fff"/><circle cx="7" cy="5" r="5" fill="#fff"/>
+            <circle cx="-3" cy="7" r="5" fill="#fff"/><circle cx="-6" cy="-1" r="5" fill="#fff"/><circle cx="1" cy="1" r="3" fill="#f9d36b"/>
+          </g>
+        </svg>
+        <div class="accueil-texte">
+          <h2 id="t-accueil" data-t="iaorana"></h2>
+          <p data-t="bienvenue"></p>
+        </div>
+        <div class="rapide">
+          <button type="button" id="btn-recommande" class="btn principal large" hidden><span aria-hidden="true">🔁</span> <span data-t="btnRecommande"></span></button>
+          <button type="button" id="btn-rappel" class="btn secondaire large"><span aria-hidden="true">📞</span> <span data-t="btnRappel"></span></button>
+        </div>
+      </div>
+
+      <div class="carte-bloc">
+        <h2><span class="num" aria-hidden="true">1</span> <span data-t="etape1"></span></h2>
+        <div id="liste-bouteilles" class="bouteilles"></div>
+        <label class="bascule">
+          <input type="checkbox" id="echange" checked>
+          <span data-t="echange"></span>
+        </label>
+        <p class="aide" id="aide-consigne"></p>
+      </div>
+
+      <div class="carte-bloc">
+        <h2><span class="num" aria-hidden="true">2</span> <span data-t="etape2"></span></h2>
+        <div id="bloc-carte">
+          <button type="button" id="btn-gps" class="btn secondaire large"><span aria-hidden="true">📍</span> <span data-t="btnGps"></span></button>
+          <div id="carte-client" class="carte" aria-label="Carte pour choisir le lieu de livraison"></div>
+          <p class="aide" id="info-point" data-t="aideCarte"></p>
+        </div>
+        <div id="bloc-sans-carte" hidden>
+          <p class="aide" data-t="sansCarte"></p>
+          <label class="champ"><span data-t="adresseTexte"></span>
+            <input type="text" id="adresse-texte" maxlength="160">
+          </label>
+        </div>
+        <label class="champ"><span data-t="repere"></span>
+          <input type="text" id="repere" maxlength="140">
+        </label>
+        <label class="champ"><span data-t="acces"></span>
+          <select id="acces">
+            <option value="facile" data-t="accesFacile"></option>
+            <option value="escaliers" data-t="accesEscaliers"></option>
+            <option value="pente" data-t="accesPente"></option>
+            <option value="servitude" data-t="accesServitude"></option>
+          </select>
+        </label>
+      </div>
+
+      <div class="carte-bloc">
+        <h2><span class="num" aria-hidden="true">3</span> <span data-t="etape3"></span></h2>
+        <label class="champ"><span data-t="nom"></span>
+          <input type="text" id="nom" autocomplete="name" maxlength="60">
+        </label>
+        <label class="champ"><span data-t="tel"></span>
+          <input type="tel" id="tel" autocomplete="tel" maxlength="20" placeholder="87 12 34 56" inputmode="tel">
+        </label>
+      </div>
+
+      <div class="carte-bloc">
+        <h2><span class="num" aria-hidden="true">4</span> <span data-t="etape4"></span></h2>
+        <label class="champ"><span data-t="creneau"></span>
+          <select id="creneau">
+            <option value="asap" data-t="crAsap"></option>
+            <option value="matin" data-t="crMatin"></option>
+            <option value="midi" data-t="crMidi"></option>
+            <option value="apres-midi" data-t="crApresMidi"></option>
+          </select>
+        </label>
+
+        <label class="option">
+          <input type="checkbox" id="branchement">
+          <span><b data-t="branchement"></b> <span class="prix-option" id="prix-branchement"></span><br>
+          <small data-t="aideBranchement"></small></span>
+        </label>
+        <label class="option solidaire" id="bloc-solidaire">
+          <input type="checkbox" id="solidaire">
+          <span><b data-t="solidaire"></b><br>
+          <small data-t="aideSolidaire"></small></span>
+        </label>
+
+        <fieldset class="paiement">
+          <legend data-t="paiement"></legend>
+          <label class="choix"><input type="radio" name="paiement" value="especes" checked> <span aria-hidden="true">💵</span> <span data-t="especes"></span></label>
+          <label class="choix"><input type="radio" name="paiement" value="carte"> <span aria-hidden="true">💳</span> <span data-t="carte"></span></label>
+          <label class="choix"><input type="radio" name="paiement" value="prise"> <span aria-hidden="true">🤝</span> <span data-t="priseEnCharge"></span></label>
+        </fieldset>
+        <label class="champ" id="bloc-prise" hidden><span data-t="refPrise"></span>
+          <input type="text" id="ref-prise" maxlength="40">
+          <small class="aide" data-t="aidePrise"></small>
+        </label>
+        <label class="champ" id="bloc-monnaie"><span data-t="monnaie"></span>
+          <input type="number" id="monnaie" min="0" step="500" placeholder="10000" inputmode="numeric">
+        </label>
+      </div>
+
+      <div class="carte-bloc recap">
+        <h2 data-t="recap"></h2>
+        <div id="recap" aria-live="polite"></div>
+        <button type="button" id="btn-commander" class="btn principal large tres-grand"><span data-t="btnCommander"></span></button>
+      </div>
+    </section>
+
+    <!-- ===================== MES COMMANDES ===================== -->
+    <section id="v-suivi" class="vue" aria-labelledby="t-suivi">
+      <h2 class="titre-vue" id="t-suivi" data-t="tabSuivi"></h2>
+      <div id="mes-commandes" aria-live="polite"></div>
+    </section>
+
+    <!-- ===================== LIVREUR ===================== -->
+    <section id="v-livreur" class="vue" aria-labelledby="t-livreur">
+      <h2 class="titre-vue" id="t-livreur">Espace livreur</h2>
+      <form id="login-livreur" class="carte-bloc connexion">
+        <label class="champ">Code livreur
+          <input type="password" id="pin-livreur" inputmode="numeric" maxlength="8" autocomplete="off">
+        </label>
+        <button type="submit" class="btn principal large">Entrer</button>
+        <p class="aide">Code de démonstration : 1234</p>
+      </form>
+      <div id="zone-livreur" hidden>
+        <div class="filtres">
+          <button type="button" class="filtre actif" data-filtre="actives">À livrer</button>
+          <button type="button" class="filtre" data-filtre="livrees">Livrées</button>
+        </div>
+        <div id="carte-livreur" class="carte haute" aria-label="Carte des livraisons"></div>
+        <div id="liste-livreur"></div>
+      </div>
+    </section>
+
+    <!-- ===================== GESTION ===================== -->
+    <section id="v-gestion" class="vue" aria-labelledby="t-gestion">
+      <h2 class="titre-vue" id="t-gestion">Gestion</h2>
+      <form id="login-gestion" class="carte-bloc connexion">
+        <label class="champ">Code gestionnaire
+          <input type="password" id="pin-gestion" inputmode="numeric" maxlength="8" autocomplete="off">
+        </label>
+        <button type="submit" class="btn principal large">Entrer</button>
+        <p class="aide">Code de démonstration : 0000</p>
+      </form>
+      <div id="zone-gestion" hidden>
+        <div class="carte-bloc">
+          <h3>Aujourd'hui</h3>
+          <div id="stats" class="stats"></div>
+        </div>
+        <div class="carte-bloc">
+          <h3>Demandes de rappel (ligne d'aide)</h3>
+          <div id="liste-rappels"></div>
+        </div>
+        <div class="carte-bloc">
+          <h3>Prix et options</h3>
+          <form id="form-prix"></form>
+        </div>
+        <div class="carte-bloc">
+          <h3>Données</h3>
+          <div class="boutons">
+            <button type="button" id="btn-csv" class="btn secondaire">Exporter les commandes (CSV)</button>
+            <button type="button" id="btn-demo" class="btn secondaire">Ajouter des commandes d'exemple</button>
+            <button type="button" id="btn-effacer" class="btn danger">Tout effacer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="mention" id="mention-demo"></p>
+  </main>
+
+  <nav class="onglets" aria-label="Navigation">
+    <button type="button" data-vue="v-commander" class="actif" aria-current="page"><span aria-hidden="true">🛒</span><span data-t="tabCommander"></span></button>
+    <button type="button" data-vue="v-suivi"><span aria-hidden="true">📦</span><span data-t="tabSuivi"></span></button>
+    <button type="button" data-vue="v-livreur"><span aria-hidden="true">🚚</span><span data-t="tabLivreur"></span></button>
+    <button type="button" data-vue="v-gestion"><span aria-hidden="true">📊</span><span data-t="tabGestion"></span></button>
+  </nav>
+
+  <!-- Confirmation de livraison (livreur) -->
+  <dialog id="dlg-livraison" aria-labelledby="dlg-titre">
+    <h3 id="dlg-titre">Confirmer la livraison</h3>
+    <p id="dlg-resume"></p>
+    <label class="bascule"><input type="checkbox" id="dlg-paye"> <span id="dlg-paye-txt">Paiement encaissé</span></label>
+    <label class="bascule" id="dlg-vide-bloc"><input type="checkbox" id="dlg-vide"> <span>Bouteille vide récupérée</span></label>
+    <label class="bascule" id="dlg-branche-bloc"><input type="checkbox" id="dlg-branche"> <span>Bouteille branchée, pas de fuite</span></label>
+    <p class="erreur" id="dlg-erreur" hidden>Coche le paiement avant de valider.</p>
+    <div class="boutons">
+      <button type="button" id="dlg-annuler" class="btn secondaire">Annuler</button>
+      <button type="button" id="dlg-ok" class="btn principal">Livrée ✔</button>
+    </div>
+  </dialog>
+
+  <!-- Ligne d'aide / être rappelé -->
+  <dialog id="dlg-aide" aria-labelledby="aide-titre">
+    <h3 id="aide-titre" data-t="aideTitre"></h3>
+    <p data-t="aideTexte"></p>
+    <a id="lien-hotline" class="btn principal large tres-grand" href="#"><span aria-hidden="true">📞</span> <span data-t="btnAppeler"></span> <span id="num-hotline"></span></a>
+    <p class="aide" id="horaires-hotline"></p>
+    <hr>
+    <p><b data-t="btnEtreRappele"></b></p>
+    <label class="champ"><span data-t="nom"></span><input type="text" id="rappel-nom" maxlength="60" autocomplete="name"></label>
+    <label class="champ"><span data-t="tel"></span><input type="tel" id="rappel-tel" maxlength="20" inputmode="tel" autocomplete="tel"></label>
+    <label class="champ"><span data-t="motif"></span>
+      <select id="rappel-motif">
+        <option value="commande" data-t="motifCommande"></option>
+        <option value="probleme" data-t="motifProbleme"></option>
+        <option value="question" data-t="motifQuestion"></option>
+      </select>
+    </label>
+    <div class="boutons">
+      <button type="button" id="aide-fermer" class="btn secondaire" data-t="fermer"></button>
+      <button type="button" id="aide-envoyer" class="btn principal" data-t="btnEtreRappele"></button>
+    </div>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+  <script src="config.js"></script>
+  <script src="langues.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
