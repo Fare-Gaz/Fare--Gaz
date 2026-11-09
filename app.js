@@ -95,6 +95,7 @@
     $("#repere").placeholder = t("reperePh");
     afficherMessagePoint();
     $$(".langues button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.langue === prefs.langue)));
+    $("#langue-courte").textContent = { fr: "FR", ty: "TY", both: "FR+TY" }[prefs.langue] || "FR";
     $("#bandeau-ty").hidden = prefs.langue === "fr";
     rendreTout();
   }
@@ -110,6 +111,7 @@
   function appliquerFacile() {
     document.body.classList.toggle("facile", prefs.facile);
     $("#btn-facile").setAttribute("aria-pressed", String(prefs.facile));
+    $$(".btn-mode").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.mode === "simple") === prefs.facile)));
     const surCommande = $("#v-commander").classList.contains("active") || $("#v-simple").classList.contains("active");
     if (surCommande) afficherVue("v-commander");
   }
@@ -120,6 +122,31 @@
     appliquerFacile();
     toast(prefs.facile ? "Mode simple : une question par écran." : "Mode normal.");
   });
+
+  // Les deux gros boutons « Simple » / « Complet » en haut de l'accueil
+  $$(".btn-mode").forEach(b => b.addEventListener("click", () => {
+    const simple = b.dataset.mode === "simple";
+    if (simple !== prefs.facile) {
+      prefs.facile = simple; ecrire(CLES.prefs, prefs);
+      if (simple) etape = 1;
+      appliquerFacile();
+    }
+    sessionStorage.setItem("faregaz.autre", "1");
+    fermerPanneau();
+    afficherVue("v-commander");
+  }));
+  // Le panneau Réglages se ferme dès qu'on touche autre chose (l'en-tête reste fixe en haut)
+  function fermerPanneau() { $("#panneau-affichage").hidden = true; $("#btn-affichage").setAttribute("aria-expanded", "false"); }
+  document.addEventListener("click", e => {
+    if (!$("#panneau-affichage").hidden && !e.target.closest("#panneau-affichage") && !e.target.closest("#btn-affichage")) fermerPanneau();
+  });
+  // Langue en un geste : FR → TY → les deux
+  $("#btn-langue-rapide").addEventListener("click", () => {
+    prefs.langue = { fr: "ty", ty: "both", both: "fr" }[prefs.langue] || "fr";
+    ecrire(CLES.prefs, prefs); appliquerLangue();
+    toast({ fr: "Français", ty: "Reo tahiti", both: "Français et reo tahiti" }[prefs.langue]);
+  });
+  $("#btn-ecouter-rapide").addEventListener("click", () => $("#btn-ecouter").click());
 
   // ================================================================ Lecture à voix haute
   function lireAVoixHaute(texte) {
@@ -150,6 +177,7 @@
       if (actif) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
     });
     $("#barre-commande").hidden = reelle !== "v-commander";
+    $("#barre-modes").hidden = reelle === "v-unbouton";   // téléphone préparé : un seul bouton, rien d'autre
     window.scrollTo(0, 0);
     if (reelle === "v-simple") rendreEtape();
     if (reelle === "v-unbouton") rendreUnBouton();
@@ -830,7 +858,7 @@
   $("#in-ouvrir").addEventListener("click", () => afficherVue("v-commander"));
   function ouvrirInstallation() {
     $$(".vue").forEach(v => v.classList.toggle("active", v.id === "v-installer"));
-    $("#barre-commande").hidden = true;
+    $("#barre-commande").hidden = true; $("#barre-modes").hidden = true;
     $("#in-titre").textContent = `${t("inTitre")} ${profil.prenom} !`;
   }
 

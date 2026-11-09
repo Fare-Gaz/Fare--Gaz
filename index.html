@@ -26,9 +26,17 @@
         </div>
       </div>
       <div class="actions-entete">
-        <button type="button" id="btn-affichage" class="outil" aria-expanded="false" aria-controls="panneau-affichage"><span aria-hidden="true">Aa</span> <span data-t="btnAffichage"></span></button>
+        <button type="button" id="btn-affichage" class="outil" aria-expanded="false" aria-controls="panneau-affichage"><span aria-hidden="true">⚙️</span> <span data-t="btnAffichage"></span></button>
         <button type="button" id="btn-aide" class="outil aide-btn"><span aria-hidden="true">📞</span> <span data-t="btnAide"></span></button>
       </div>
+    </div>
+    <div class="barre-modes" id="barre-modes">
+      <div class="seg" role="group" aria-label="Mode de commande">
+        <button type="button" class="btn-mode" data-mode="simple" aria-pressed="false"><span aria-hidden="true">👵🏽</span> <span data-t="modeSimple"></span></button>
+        <button type="button" class="btn-mode" data-mode="complet" aria-pressed="true"><span aria-hidden="true">📋</span> <span data-t="modeComplet"></span></button>
+      </div>
+      <button type="button" id="btn-langue-rapide" class="outil rapide-btn" aria-label="Changer de langue : français, reo tahiti, les deux"><span aria-hidden="true">🌺</span> <span id="langue-courte">FR</span></button>
+      <button type="button" id="btn-ecouter-rapide" class="outil rapide-btn" aria-label="Écouter l'écran à voix haute"><span aria-hidden="true">🔊</span></button>
     </div>
     <div id="panneau-affichage" class="panneau" hidden>
       <p class="panneau-titre" data-t="langue"></p>
@@ -37,7 +45,7 @@
         <button type="button" data-langue="ty" aria-pressed="false">Reo tahiti</button>
         <button type="button" data-langue="both" aria-pressed="false">Les deux</button>
       </div>
-      <button type="button" id="btn-facile" class="option-panneau" aria-pressed="false">
+      <button type="button" id="btn-facile" class="option-panneau" aria-pressed="false" hidden>
         <span aria-hidden="true">👵🏽</span> <span><b data-t="btnSimple"></b><br><small data-t="aideSimple"></small></span>
       </button>
       <button type="button" id="btn-ecouter" class="option-panneau">

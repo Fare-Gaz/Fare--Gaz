@@ -103,7 +103,7 @@ window.FARE_GAZ_TEXTES = {
   rappelEnvoye:    { fr: "C'est noté : on te rappelle très vite. Māuruuru !" },
   fermer:          { fr: "Fermer", ty: "ʻŌpani" },
   // ---- Version 3 : en-tête compact, mode simple, confirmation, erreurs
-  btnAffichage:    { fr: "Affichage" },
+  btnAffichage:    { fr: "Réglages" },
   langue:          { fr: "Langue", ty: "Reo" },
   btnSimple:       { fr: "Mode simple (matahiapo)", ty: "Mea ʻohie (matahiapo)" },
   aideSimple:      { fr: "Une question par écran, gros boutons." },
@@ -187,4 +187,10 @@ window.FARE_GAZ_TEXTES = {
   codeFaux:        { fr: "Ce n'est pas le bon code. Réessaie." },
   codeFaux3:       { fr: "Code oublié ? Appelle la ligne d'aide, on commande pour toi." },
   appelAvant:      { fr: "Le livreur t'appellera avant de venir, pour vérifier que tu es là." },
+  // ---- Choix du mode en haut de l'accueil
+  choisirMode:     { fr: "Comment veux-tu commander ?", ty: "Nāhea ʻoe e tītau ai ?" },
+  modeSimple:      { fr: "Simple", ty: "Mea ʻohie" },
+  modeSimpleAide:  { fr: "Gros boutons, une question à la fois" },
+  modeComplet:     { fr: "Complet" },
+  modeCompletAide: { fr: "Toutes les options sur une page" },
 };
