@@ -16,7 +16,8 @@ en français et en reo tahiti, avec un mode facile pour les personnes âgées.
 | 📦 **Mes commandes** | Suivi en vaʻa (Reçue → En route → Livrée), annulation, « Commander comme la dernière fois » |
 | 🚚 **Livreur** (code `1234`) | Carte des livraisons, priorité aux tarifs solidaires, itinéraire, appel, confirmation du paiement, de la bouteille vide et du branchement |
 | 📊 **Gestion** (code `0000`) | Chiffres du jour, demandes de rappel de la ligne d'aide, prix et options, export CSV, données d'exemple |
-| En haut | **FR / TY / FR + TY**, **Mode facile**, **Écouter** (lecture à voix haute), **Aide** (appel ou demande de rappel) |
+| En haut | **Affichage** (langue FR / reo tahiti / les deux, **mode simple matahiapo**, lecture à voix haute) et **Aide** (appel ou demande de rappel) |
+| 👵🏽 **Mode simple** | Pour les matahiapo : une question par écran (bouteille → lieu → coordonnées → vérification), gros boutons Suivant / Retour, « au même endroit que la dernière fois ? » |
 
 ## Mettre l'app en ligne avec GitHub Pages
 
@@ -40,7 +41,7 @@ Si l'ancienne version reste affichée sur le téléphone, ferme l'app et rouvre-
 
 1. **Gestion** → `0000` → **Ajouter des commandes d'exemple**.
 2. **Livreur** → `1234` : livraisons sur la carte, avec badges « Solidaire », « Branchement », « Chemin en pente ».
-3. **Commander** : passe une commande avec « Me localiser », puis montre **FR + TY** et le **Mode facile**.
+3. **Commander** : passe une commande avec « Me localiser » (écran de vérification avant l'envoi), puis **Affichage → Mode simple** et **Les deux** langues.
 4. **Aide** : demande un rappel, puis montre-le dans **Gestion**.
 
 ## Fichiers
@@ -55,7 +56,7 @@ manifest.json  installation sur téléphone
 sw.js          ouverture rapide et hors connexion
 icons/         icônes
 .nojekyll      pour GitHub Pages
-AUDIT.md       audit de l'app et liste de ce qu'il reste à faire
+AUDIT.md       audits (technique v2, design et facilité d'utilisation v3)
 README.md      ce fichier
 ```
 

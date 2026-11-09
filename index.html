@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Fare Gaz — Livraison de gaz à domicile</title>
-  <meta name="description" content="Commande ta bouteille de gaz et fais-la livrer à domicile à Tahiti : géolocalisation, branchement, paiement à la livraison, en français et en reo tahiti.">
+  <meta name="description" content="Commande ta bouteille de gaz et fais-la livrer à domicile à Tahiti : géolocalisation, branchement, paiement à la livraison, en français et en reo tahiti, avec un mode simple pour les matahiapo.">
   <meta name="theme-color" content="#0e7c86">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -15,33 +15,45 @@
 <body>
   <a class="saut" href="#contenu">Aller au contenu</a>
 
+  <!-- En-tête compact : logo, Affichage, Aide -->
   <header class="entete">
-    <div class="marque">
-      <img src="icons/icon.svg" alt="" class="logo">
-      <div>
-        <h1 id="nom-app">Fare Gaz</h1>
-        <p class="slogan" data-t="slogan"></p>
+    <div class="ligne-entete">
+      <div class="marque">
+        <img src="icons/icon.svg" alt="" class="logo">
+        <div>
+          <h1 id="nom-app">Fare Gaz</h1>
+          <p class="slogan" data-t="slogan"></p>
+        </div>
+      </div>
+      <div class="actions-entete">
+        <button type="button" id="btn-affichage" class="outil" aria-expanded="false" aria-controls="panneau-affichage"><span aria-hidden="true">Aa</span> <span data-t="btnAffichage"></span></button>
+        <button type="button" id="btn-aide" class="outil aide-btn"><span aria-hidden="true">📞</span> <span data-t="btnAide"></span></button>
       </div>
     </div>
-    <div class="outils" role="toolbar" aria-label="Réglages d'affichage">
+    <div id="panneau-affichage" class="panneau" hidden>
+      <p class="panneau-titre" data-t="langue"></p>
       <div class="langues" role="group" aria-label="Langue">
-        <button type="button" data-langue="fr" aria-pressed="true">FR</button>
-        <button type="button" data-langue="ty" aria-pressed="false">TY</button>
-        <button type="button" data-langue="both" aria-pressed="false">FR + TY</button>
+        <button type="button" data-langue="fr" aria-pressed="true">Français</button>
+        <button type="button" data-langue="ty" aria-pressed="false">Reo tahiti</button>
+        <button type="button" data-langue="both" aria-pressed="false">Les deux</button>
       </div>
-      <button type="button" id="btn-facile" class="outil" aria-pressed="false"><span aria-hidden="true">Aa</span> <span data-t="btnFacile"></span></button>
-      <button type="button" id="btn-ecouter" class="outil"><span aria-hidden="true">🔊</span> <span data-t="btnEcouter"></span></button>
-      <button type="button" id="btn-aide" class="outil aide-btn"><span aria-hidden="true">📞</span> <span data-t="btnAide"></span></button>
+      <button type="button" id="btn-facile" class="option-panneau" aria-pressed="false">
+        <span aria-hidden="true">👵🏽</span> <span><b data-t="btnSimple"></b><br><small data-t="aideSimple"></small></span>
+      </button>
+      <button type="button" id="btn-ecouter" class="option-panneau">
+        <span aria-hidden="true">🔊</span> <span><b data-t="btnEcouter"></b><br><small data-t="aideEcouter"></small></span>
+      </button>
     </div>
     <div class="bordure" aria-hidden="true"></div>
   </header>
 
   <p id="bandeau-ty" class="bandeau-ty" hidden data-t="bandeauTy"></p>
+  <p id="bandeau-commande" class="bandeau-commande" hidden></p>
 
   <main id="contenu">
-    <!-- ===================== COMMANDER ===================== -->
+    <!-- ===================== COMMANDER (mode normal) ===================== -->
     <section id="v-commander" class="vue active" aria-labelledby="t-accueil">
-      <div class="accueil">
+      <div class="accueil" id="accueil">
         <svg class="illus" viewBox="0 0 360 120" aria-hidden="true">
           <defs>
             <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9a8"/><stop offset="1" stop-color="#fff4e3"/></linearGradient>
@@ -73,9 +85,10 @@
         </div>
       </div>
 
-      <div class="carte-bloc">
+      <div class="carte-bloc" id="bloc-bouteilles">
         <h2><span class="num" aria-hidden="true">1</span> <span data-t="etape1"></span></h2>
         <div id="liste-bouteilles" class="bouteilles"></div>
+        <p class="msg-erreur" id="err-bouteille" hidden></p>
         <label class="bascule">
           <input type="checkbox" id="echange" checked>
           <span data-t="echange"></span>
@@ -83,12 +96,12 @@
         <p class="aide" id="aide-consigne"></p>
       </div>
 
-      <div class="carte-bloc">
+      <div class="carte-bloc" id="bloc-lieu">
         <h2><span class="num" aria-hidden="true">2</span> <span data-t="etape2"></span></h2>
         <div id="bloc-carte">
           <button type="button" id="btn-gps" class="btn secondaire large"><span aria-hidden="true">📍</span> <span data-t="btnGps"></span></button>
           <div id="carte-client" class="carte" aria-label="Carte pour choisir le lieu de livraison"></div>
-          <p class="aide" id="info-point" data-t="aideCarte"></p>
+          <p class="aide" id="info-point"></p>
         </div>
         <div id="bloc-sans-carte" hidden>
           <p class="aide" data-t="sansCarte"></p>
@@ -96,40 +109,37 @@
             <input type="text" id="adresse-texte" maxlength="160">
           </label>
         </div>
-        <label class="champ"><span data-t="repere"></span>
-          <input type="text" id="repere" maxlength="140">
-        </label>
-        <label class="champ"><span data-t="acces"></span>
-          <select id="acces">
-            <option value="facile" data-t="accesFacile"></option>
-            <option value="escaliers" data-t="accesEscaliers"></option>
-            <option value="pente" data-t="accesPente"></option>
-            <option value="servitude" data-t="accesServitude"></option>
-          </select>
-        </label>
+        <p class="msg-erreur" id="err-point" hidden></p>
+        <details class="plus-options">
+          <summary data-t="plusOptionsLieu"></summary>
+          <label class="champ"><span data-t="repere"></span>
+            <input type="text" id="repere" maxlength="140">
+          </label>
+          <label class="champ"><span data-t="acces"></span>
+            <select id="acces">
+              <option value="facile" data-t="accesFacile"></option>
+              <option value="escaliers" data-t="accesEscaliers"></option>
+              <option value="pente" data-t="accesPente"></option>
+              <option value="servitude" data-t="accesServitude"></option>
+            </select>
+          </label>
+        </details>
       </div>
 
       <div class="carte-bloc">
         <h2><span class="num" aria-hidden="true">3</span> <span data-t="etape3"></span></h2>
-        <label class="champ"><span data-t="nom"></span>
-          <input type="text" id="nom" autocomplete="name" maxlength="60">
+        <label class="champ" id="champ-nom"><span data-t="nom"></span>
+          <input type="text" id="nom" autocomplete="name" maxlength="60" aria-describedby="err-nom">
         </label>
-        <label class="champ"><span data-t="tel"></span>
-          <input type="tel" id="tel" autocomplete="tel" maxlength="20" placeholder="87 12 34 56" inputmode="tel">
+        <p class="msg-erreur" id="err-nom" hidden></p>
+        <label class="champ" id="champ-tel"><span data-t="tel"></span>
+          <input type="tel" id="tel" autocomplete="tel" maxlength="20" placeholder="87 12 34 56" inputmode="tel" aria-describedby="err-tel">
         </label>
+        <p class="msg-erreur" id="err-tel" hidden></p>
       </div>
 
       <div class="carte-bloc">
         <h2><span class="num" aria-hidden="true">4</span> <span data-t="etape4"></span></h2>
-        <label class="champ"><span data-t="creneau"></span>
-          <select id="creneau">
-            <option value="asap" data-t="crAsap"></option>
-            <option value="matin" data-t="crMatin"></option>
-            <option value="midi" data-t="crMidi"></option>
-            <option value="apres-midi" data-t="crApresMidi"></option>
-          </select>
-        </label>
-
         <label class="option">
           <input type="checkbox" id="branchement">
           <span><b data-t="branchement"></b> <span class="prix-option" id="prix-branchement"></span><br>
@@ -148,18 +158,86 @@
           <label class="choix"><input type="radio" name="paiement" value="prise"> <span aria-hidden="true">🤝</span> <span data-t="priseEnCharge"></span></label>
         </fieldset>
         <label class="champ" id="bloc-prise" hidden><span data-t="refPrise"></span>
-          <input type="text" id="ref-prise" maxlength="40">
+          <input type="text" id="ref-prise" maxlength="40" aria-describedby="err-prise">
           <small class="aide" data-t="aidePrise"></small>
         </label>
-        <label class="champ" id="bloc-monnaie"><span data-t="monnaie"></span>
-          <input type="number" id="monnaie" min="0" step="500" placeholder="10000" inputmode="numeric">
-        </label>
+        <p class="msg-erreur" id="err-prise" hidden></p>
+        <details class="plus-options">
+          <summary data-t="plusOptions"></summary>
+          <label class="champ"><span data-t="creneau"></span>
+            <select id="creneau">
+              <option value="asap" data-t="crAsap"></option>
+              <option value="matin" data-t="crMatin"></option>
+              <option value="midi" data-t="crMidi"></option>
+              <option value="apres-midi" data-t="crApresMidi"></option>
+            </select>
+          </label>
+          <label class="champ" id="bloc-monnaie"><span data-t="monnaie"></span>
+            <input type="number" id="monnaie" min="0" step="500" placeholder="10000" inputmode="numeric" aria-describedby="err-monnaie">
+          </label>
+          <p class="msg-erreur" id="err-monnaie" hidden></p>
+        </details>
       </div>
 
       <div class="carte-bloc recap">
         <h2 data-t="recap"></h2>
         <div id="recap" aria-live="polite"></div>
-        <button type="button" id="btn-commander" class="btn principal large tres-grand"><span data-t="btnCommander"></span></button>
+      </div>
+    </section>
+
+    <!-- ===================== MODE SIMPLE (matahiapo) : une question par écran ===================== -->
+    <section id="v-simple" class="vue" aria-labelledby="s-titre">
+      <p class="progres" id="s-progres" aria-live="polite"></p>
+      <div class="s-barre" aria-hidden="true"><div id="s-barre-rempli"></div></div>
+
+      <div class="s-etape" data-etape="1">
+        <h2 class="s-titre" data-t="sQuelleBouteille"></h2>
+        <div id="s-bouteilles" class="s-bouteilles"></div>
+        <p class="msg-erreur" id="s-err-1" hidden></p>
+        <button type="button" class="btn secondaire large tres-grand" id="s-appel"><span aria-hidden="true">📞</span> <span data-t="sPrefereAppel"></span></button>
+      </div>
+
+      <div class="s-etape" data-etape="2" hidden>
+        <h2 class="s-titre" data-t="sOuLivrer"></h2>
+        <div id="s-meme" hidden>
+          <p class="s-texte" data-t="sMemeEndroit"></p>
+          <p class="s-repere" id="s-repere-precedent"></p>
+          <button type="button" class="btn principal large tres-grand" id="s-meme-oui"><span aria-hidden="true">🏠</span> <span data-t="sMemeOui"></span></button>
+          <button type="button" class="btn secondaire large tres-grand" id="s-meme-non" data-t="sAutreEndroit"></button>
+        </div>
+        <div id="s-nouveau">
+          <button type="button" class="btn principal large tres-grand" id="s-gps"><span aria-hidden="true">📍</span> <span data-t="btnGps"></span></button>
+          <div id="carte-simple" class="carte" aria-label="Carte du lieu de livraison"></div>
+          <p class="s-texte" id="s-info-point"></p>
+          <label class="champ" id="s-bloc-adresse" hidden><span data-t="adresseTexte"></span><input type="text" id="s-adresse" maxlength="160"></label>
+        </div>
+        <p class="msg-erreur" id="s-err-2" hidden></p>
+      </div>
+
+      <div class="s-etape" data-etape="3" hidden>
+        <h2 class="s-titre" data-t="etape3"></h2>
+        <label class="champ"><span data-t="nom"></span><input type="text" id="s-nom" autocomplete="name" maxlength="60"></label>
+        <label class="champ"><span data-t="tel"></span><input type="tel" id="s-tel" autocomplete="tel" maxlength="20" inputmode="tel" placeholder="87 12 34 56"></label>
+        <p class="msg-erreur" id="s-err-3" hidden></p>
+        <label class="option grande"><input type="checkbox" id="s-echange" checked> <span><b data-t="echange"></b></span></label>
+        <label class="option grande"><input type="checkbox" id="s-branchement"> <span><b data-t="branchement"></b><br><small data-t="aideBranchementCourt"></small></span></label>
+        <label class="option grande solidaire" id="s-bloc-solidaire"><input type="checkbox" id="s-solidaire"> <span><b data-t="solidaire"></b><br><small data-t="aideSolidaireCourt"></small></span></label>
+      </div>
+
+      <div class="s-etape" data-etape="4" hidden>
+        <h2 class="s-titre" data-t="sVerifie"></h2>
+        <div id="s-recap" class="s-recap"></div>
+        <p class="s-texte"><b data-t="paiement"></b></p>
+        <div class="s-paiement" role="radiogroup" aria-label="Paiement">
+          <button type="button" class="s-choix" data-paie="especes" aria-pressed="true"><span aria-hidden="true">💵</span> <span data-t="especes"></span></button>
+          <button type="button" class="s-choix" data-paie="carte" aria-pressed="false"><span aria-hidden="true">💳</span> <span data-t="carte"></span></button>
+        </div>
+        <button type="button" class="btn principal large tres-grand" id="s-commander"><span aria-hidden="true">✔</span> <span data-t="sOuiCommande"></span></button>
+      </div>
+
+      <div class="s-nav">
+        <button type="button" class="btn secondaire" id="s-retour"><span aria-hidden="true">◀</span> <span data-t="sRetour"></span></button>
+        <button type="button" class="btn principal" id="s-suivant"><span data-t="sSuivant"></span> <span aria-hidden="true">▶</span></button>
       </div>
     </section>
 
@@ -226,12 +304,28 @@
     <p class="mention" id="mention-demo"></p>
   </main>
 
+  <!-- Bouton Commander fixé en bas, avec le total (mode normal) -->
+  <div class="barre-commande" id="barre-commande">
+    <div><small data-t="total"></small><b id="barre-total">0 F</b></div>
+    <button type="button" id="btn-commander" class="btn principal"><span data-t="btnCommander"></span> <span aria-hidden="true">▶</span></button>
+  </div>
+
   <nav class="onglets" aria-label="Navigation">
     <button type="button" data-vue="v-commander" class="actif" aria-current="page"><span aria-hidden="true">🛒</span><span data-t="tabCommander"></span></button>
     <button type="button" data-vue="v-suivi"><span aria-hidden="true">📦</span><span data-t="tabSuivi"></span></button>
     <button type="button" data-vue="v-livreur"><span aria-hidden="true">🚚</span><span data-t="tabLivreur"></span></button>
     <button type="button" data-vue="v-gestion"><span aria-hidden="true">📊</span><span data-t="tabGestion"></span></button>
   </nav>
+
+  <!-- Confirmation claire, en gros caractères (remplace les petites fenêtres du navigateur) -->
+  <dialog id="dlg-confirmer" class="dlg-grand" aria-labelledby="conf-titre">
+    <h3 id="conf-titre"></h3>
+    <div id="conf-corps"></div>
+    <div class="boutons boutons-grands">
+      <button type="button" id="conf-non" class="btn secondaire"></button>
+      <button type="button" id="conf-oui" class="btn principal"></button>
+    </div>
+  </dialog>
 
   <!-- Confirmation de livraison (livreur) -->
   <dialog id="dlg-livraison" aria-labelledby="dlg-titre">
@@ -248,7 +342,7 @@
   </dialog>
 
   <!-- Ligne d'aide / être rappelé -->
-  <dialog id="dlg-aide" aria-labelledby="aide-titre">
+  <dialog id="dlg-aide" class="dlg-grand" aria-labelledby="aide-titre">
     <h3 id="aide-titre" data-t="aideTitre"></h3>
     <p data-t="aideTexte"></p>
     <a id="lien-hotline" class="btn principal large tres-grand" href="#"><span aria-hidden="true">📞</span> <span data-t="btnAppeler"></span> <span id="num-hotline"></span></a>
@@ -257,6 +351,7 @@
     <p><b data-t="btnEtreRappele"></b></p>
     <label class="champ"><span data-t="nom"></span><input type="text" id="rappel-nom" maxlength="60" autocomplete="name"></label>
     <label class="champ"><span data-t="tel"></span><input type="tel" id="rappel-tel" maxlength="20" inputmode="tel" autocomplete="tel"></label>
+    <p class="msg-erreur" id="err-rappel" hidden></p>
     <label class="champ"><span data-t="motif"></span>
       <select id="rappel-motif">
         <option value="commande" data-t="motifCommande"></option>
@@ -264,7 +359,7 @@
         <option value="question" data-t="motifQuestion"></option>
       </select>
     </label>
-    <div class="boutons">
+    <div class="boutons boutons-grands">
       <button type="button" id="aide-fermer" class="btn secondaire" data-t="fermer"></button>
       <button type="button" id="aide-envoyer" class="btn principal" data-t="btnEtreRappele"></button>
     </div>

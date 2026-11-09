@@ -1,6 +1,6 @@
 // Service worker : garde l'application en cache pour qu'elle s'ouvre vite,
 // même avec une connexion faible. La carte, elle, a besoin d'Internet.
-const CACHE = "fare-gaz-v2";
+const CACHE = "fare-gaz-v3";
 const FICHIERS = [
   "./", "index.html", "style.css", "app.js", "config.js", "langues.js", "manifest.json",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",

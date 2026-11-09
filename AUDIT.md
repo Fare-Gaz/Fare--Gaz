@@ -52,3 +52,40 @@ Méthode : relecture du code, test de tous les écrans dans un navigateur de té
 5. **Données personnelles** : page d'information, durée de conservation, possibilité d'effacement. Le tarif solidaire ne demande aucun détail de santé : une simple case.
 6. **Dépôt GitHub** : garder la démo publique, mais mettre la version du partenaire dans un dépôt privé.
 7. **Tests sur de vrais téléphones** Android d'entrée de gamme, et avec des personnes âgées.
+
+---
+
+# Version 3 (8 novembre 2026) : audit design et facilité d'utilisation
+
+Mesures sur un écran de téléphone de 390 × 844 px, avant (v2) et après (v3).
+
+| Mesure | v2 | v3 |
+| --- | --- | --- |
+| Hauteur de l'en-tête | 191 px | 107 px |
+| Début de la liste des bouteilles | 568 px | 484 px |
+| Longueur de la page Commander | 3,7 écrans | 3,4 écrans (options facultatives repliées) |
+| Mode facile / simple | Page entière agrandie, 3,9 écrans | 4 écrans courts, une question par écran |
+| Défauts d'accessibilité (axe-core, WCAG 2.1 AA) | 1 (contraste du bouton Aide) | 0, en mode normal et en mode simple |
+| Point GPS à la commande suivante | À refaire | Repris automatiquement |
+
+## Corrections faites
+
+1. **Écran « Je vérifie ma commande »** en gros caractères avant l'envoi (bouteille, lieu, branchement, paiement, total).
+2. **Point GPS réutilisé** : « Même endroit que la dernière fois », épingle déplaçable.
+3. **Erreurs sous les champs**, en rouge, qui restent jusqu'à correction ; l'écran descend jusqu'à la première erreur.
+4. **En-tête compact** : logo, bouton **Affichage** (langue, mode simple, écoute) et bouton **Aide**.
+5. **Bouton Commander fixé en bas** avec le total.
+6. **Contraste du bouton Aide** corrigé (orange foncé, 5:1).
+7. **Mode simple matahiapo** : 4 écrans, barre de progression, gros boutons Suivant / Retour, le dernier bouton devient « Oui, je commande ».
+8. **Options facultatives repliées** (repère, accès, heure, monnaie) sous « Plus d'options ».
+9. **Bandeau « Ta commande est bien reçue / Ta bouteille est en route »** en haut de l'écran.
+10. **Fenêtres de confirmation de l'app** à la place des petites fenêtres du navigateur, côté client.
+11. **Illustration d'accueil masquée** après la première commande, pour aller plus vite aux bouteilles.
+
+## Reste à faire
+
+- Traduire en reo tahiti les textes encore en français, puis faire relire l'ensemble.
+- Jeu d'icônes polynésiennes dessiné par un artiste local, à la place des emoji.
+- Photos réelles des bouteilles du partenaire.
+- Heure d'arrivée estimée, vue satellite, voix enregistrées en reo tahiti.
+- Test avec 5 matahiapo qui commandent seuls.
