@@ -326,3 +326,56 @@ body.facile { --base: 21px; --cible: 64px; }
 body.facile .onglets button { min-height: 70px; font-size: .9rem; }
 .accueil.compact .illus { display: none; }
 .accueil.compact .accueil-texte p { display: none; }
+
+/* =================== Accueil un bouton (téléphone préparé) =================== */
+.ub-titre { font-size: 1.9rem; color: var(--c-fonce); margin: 8px 0 14px; }
+.ub-carte { display: flex; gap: 16px; align-items: center; background: #fff; border: 3px solid var(--c); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+.ub-carte .ico { width: 70px; height: 92px; flex: none; }
+.ub-carte b { display: block; font-size: 1.35rem; }
+.ub-carte .prix { font-size: 1.3rem; font-weight: 800; color: var(--c-fonce); }
+.ub-carte small { display: block; color: var(--doux); font-size: 1rem; margin-top: 4px; }
+.ub-gros { min-height: 84px !important; font-size: 1.4rem !important; margin-bottom: 14px; border-radius: 18px; }
+.aide-gros { background: #b45309; color: #fff; }
+.lien-discret { background: none; border: 0; color: var(--c-fonce); text-decoration: underline; font-size: 1rem; min-height: 48px; width: 100%; cursor: pointer; }
+#v-unbouton .commande { border: 3px solid var(--c-clair); }
+
+/* Installation */
+.in-bloc h2 { font-size: 1.5rem; color: var(--c-fonce); }
+.in-liste li { margin-bottom: 8px; }
+
+/* Préparer : QR code et carte à imprimer */
+#carte-prep { height: 200px; }
+.carte-imprimable { border: 2px dashed var(--c); border-radius: 14px; padding: 14px; text-align: center; background: #fff; }
+.ci-titre { font-weight: 800; font-size: 1.2rem; margin: 0 0 8px; color: var(--c-fonce); }
+.prep-qr svg { width: 220px; height: 220px; display: block; margin: 0 auto; }
+.ci-texte { font-size: .95rem; margin: 8px 0 4px; }
+.ci-hotline { margin: 4px 0 0; }
+.tc-regulier { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--bord); }
+
+@media print {
+  body * { visibility: hidden !important; }
+  #carte-imprimable, #carte-imprimable * { visibility: visible !important; }
+  #carte-imprimable { position: fixed; left: 0; top: 0; width: 9cm; border: 1px dashed #000; }
+  dialog { position: static; }
+}
+.ci-code { font-size: 1.1rem; margin: 0 0 6px; }
+.ci-code b { font-size: 1.5rem; letter-spacing: .15em; color: var(--c-fonce); }
+.ub-infos { background: var(--sable); border-radius: 12px; padding: 10px 12px; font-size: 1.05rem; }
+.ub-infos b { font-size: 1.3rem; letter-spacing: .12em; }
+.tc-code { background: var(--c-clair); border-radius: 12px; padding: 4px 12px 12px; margin-bottom: 10px; }
+.inscrit { padding: 10px 0; border-bottom: 1px solid var(--bord); }
+.inscrit .haut { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.badge.du { background: #fde2e1; color: var(--danger); }
+body.bilingue .ligne-entete .slogan { display: none; }
+
+/* Code à 4 chiffres */
+.code-points { display: flex; justify-content: center; gap: 18px; margin: 14px 0; }
+.code-points span { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--c); }
+.code-points span.plein { background: var(--c); }
+.clavier { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.clavier button { min-height: 66px; font-size: 1.6rem; font-weight: 700; border: 2px solid var(--bord); border-radius: 14px; background: #fff; color: var(--texte); cursor: pointer; }
+.clavier button[data-action] { font-size: 1.05rem; background: var(--fond); }
+/* Appel de vérification (livreur) */
+.verif { background: #fff7ee; border: 1px solid #f2c9a0; border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+.verif.ok { background: #e2f3e8; border-color: #9fd3b2; }
+.verif input { width: 100%; margin-top: 6px; padding: 8px; border: 1px solid var(--bord); border-radius: 8px; font-size: .95rem; }

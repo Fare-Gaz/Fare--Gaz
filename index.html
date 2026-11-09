@@ -43,6 +43,9 @@
       <button type="button" id="btn-ecouter" class="option-panneau">
         <span aria-hidden="true">🔊</span> <span><b data-t="btnEcouter"></b><br><small data-t="aideEcouter"></small></span>
       </button>
+      <button type="button" id="btn-preparer" class="option-panneau">
+        <span aria-hidden="true">🤝</span> <span><b data-t="btnPreparer"></b><br><small data-t="aidePreparer"></small></span>
+      </button>
     </div>
     <div class="bordure" aria-hidden="true"></div>
   </header>
@@ -241,6 +244,36 @@
       </div>
     </section>
 
+    <!-- ===================== ACCUEIL UN BOUTON (téléphone préparé pour un matahiapo) ===================== -->
+    <section id="v-unbouton" class="vue" aria-labelledby="ub-titre">
+      <h2 class="ub-titre" id="ub-titre"></h2>
+      <div id="ub-suivi"></div>
+      <div class="ub-carte" id="ub-carte"></div>
+      <button type="button" class="btn principal large ub-gros" id="ub-commander"><span aria-hidden="true">🛢️</span> <span data-t="ubCommander"></span></button>
+      <a class="btn aide-gros large ub-gros" id="ub-appeler" href="#"><span aria-hidden="true">📞</span> <span data-t="ubAppeler"></span></a>
+      <p class="ub-infos" id="ub-infos"></p>
+      <button type="button" class="lien-discret" id="ub-autre" data-t="ubAutre"></button>
+    </section>
+
+    <!-- ===================== INSTALLATION (après un lien de préparation) ===================== -->
+    <section id="v-installer" class="vue" aria-labelledby="in-titre">
+      <div class="carte-bloc in-bloc">
+        <h2 id="in-titre"></h2>
+        <p data-t="inTexte"></p>
+        <button type="button" class="btn principal large tres-grand" id="in-installer" hidden><span aria-hidden="true">📲</span> <span data-t="inInstaller"></span></button>
+        <div id="in-etapes">
+          <p><b data-t="inManuel"></b></p>
+          <ol class="in-liste">
+            <li data-t="inAndroid1"></li>
+            <li data-t="inAndroid2"></li>
+            <li data-t="inAndroid3"></li>
+          </ol>
+          <p class="aide" data-t="inIphone"></p>
+        </div>
+        <button type="button" class="btn secondaire large tres-grand" id="in-ouvrir"><span data-t="inOuvrir"></span> <span aria-hidden="true">▶</span></button>
+      </div>
+    </section>
+
     <!-- ===================== MES COMMANDES ===================== -->
     <section id="v-suivi" class="vue" aria-labelledby="t-suivi">
       <h2 class="titre-vue" id="t-suivi" data-t="tabSuivi"></h2>
@@ -287,6 +320,47 @@
           <div id="liste-rappels"></div>
         </div>
         <div class="carte-bloc">
+          <h3>Commande prise par téléphone</h3>
+          <div class="tc-code">
+            <label class="champ">Code client (4 chiffres)<input type="text" id="tc-code" maxlength="4" inputmode="numeric" placeholder="1234"></label>
+            <div id="tc-code-resultat"></div>
+          </div>
+          <p class="aide">Pas de code ? Remplis la commande :</p>
+          <form id="form-tel-commande">
+            <label class="champ">Téléphone du client<input type="tel" id="tc-tel" maxlength="20" inputmode="tel" placeholder="87 12 34 56"></label>
+            <p class="aide" id="tc-connu" hidden></p>
+            <label class="champ">Nom<input type="text" id="tc-nom" maxlength="60"></label>
+            <label class="champ">Adresse et repère (commune, quartier, portail…)<input type="text" id="tc-adresse" maxlength="160"></label>
+            <div class="ligne-prix">
+              <label class="champ">Bouteille<select id="tc-bouteille"></select></label>
+              <label class="champ">Quantité<select id="tc-q"><option>1</option><option>2</option><option>3</option></select></label>
+            </div>
+            <label class="bascule"><input type="checkbox" id="tc-echange" checked> <span>Bouteille vide à échanger</span></label>
+            <label class="bascule"><input type="checkbox" id="tc-branchement"> <span>Branchement</span></label>
+            <label class="bascule"><input type="checkbox" id="tc-solidaire"> <span>Tarif solidaire (matahiapo, handicap)</span></label>
+            <label class="champ">Paiement<select id="tc-paiement"><option value="especes">Espèces</option><option value="carte">Carte</option><option value="prise">Prise en charge</option><option value="famille">Facture famille (mensuelle)</option></select></label>
+            <p class="msg-erreur" id="tc-err" hidden></p>
+            <div class="boutons"><button type="submit" class="btn principal">Enregistrer la commande</button></div>
+          </form>
+        </div>
+        <div class="carte-bloc">
+          <h3>Clients pré-enregistrés et livraisons automatiques</h3>
+          <p class="aide">Matahiapo dont le téléphone a été préparé. Ceux qui ont une livraison automatique apparaissent ici quand elle arrive à échéance.</p>
+          <div class="boutons"><button type="button" class="btn principal" id="btn-abo-dues">📅 Créer les livraisons automatiques dues</button></div>
+          <div id="liste-inscrits"></div>
+        </div>
+        <div class="carte-bloc">
+          <h3>Facturation des familles (ce mois-ci)</h3>
+          <p class="aide">Livraisons payées par un proche : une facture par mois, réglée par virement permanent ou prélèvement.</p>
+          <div id="liste-familles"></div>
+        </div>
+        <div class="carte-bloc">
+          <h3>Clients réguliers</h3>
+          <p class="aide">Pour reprendre leur dernière commande en un geste, pendant l'appel.</p>
+          <div id="liste-reguliers"></div>
+          <div class="boutons"><button type="button" class="btn secondaire" id="btn-preparer-gestion">🤝 Préparer le téléphone d'un client</button></div>
+        </div>
+        <div class="carte-bloc">
           <h3>Prix et options</h3>
           <form id="form-prix"></form>
         </div>
@@ -324,6 +398,20 @@
     <div class="boutons boutons-grands">
       <button type="button" id="conf-non" class="btn secondaire"></button>
       <button type="button" id="conf-oui" class="btn principal"></button>
+    </div>
+  </dialog>
+
+  <!-- Code à 4 chiffres avant de commander (évite les commandes par erreur) -->
+  <dialog id="dlg-code" class="dlg-grand" aria-labelledby="code-titre">
+    <h3 id="code-titre" data-t="codeTitre"></h3>
+    <p data-t="codeTexte"></p>
+    <div class="code-points" id="code-points" aria-live="polite"><span></span><span></span><span></span><span></span></div>
+    <p class="msg-erreur" id="code-err" hidden></p>
+    <div class="clavier" id="clavier">
+      <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+      <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+      <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+      <button type="button" data-action="annuler" data-t="fermer"></button><button type="button">0</button><button type="button" data-action="effacer" aria-label="Effacer">⌫</button>
     </div>
   </dialog>
 
@@ -365,10 +453,79 @@
     </div>
   </dialog>
 
+  <!-- Préparer le téléphone d'un proche : lien + QR code -->
+  <dialog id="dlg-preparer" class="dlg-grand" aria-labelledby="prep-titre">
+    <h3 id="prep-titre" data-t="btnPreparer"></h3>
+    <div id="prep-formulaire">
+      <p class="aide" data-t="prepIntro"></p>
+      <label class="champ"><span data-t="prepPrenom"></span><input type="text" id="prep-prenom" maxlength="40"></label>
+      <label class="champ"><span data-t="tel"></span><input type="tel" id="prep-tel" maxlength="20" inputmode="tel" placeholder="87 12 34 56"></label>
+      <div class="ligne-prix">
+        <label class="champ"><span data-t="prepBouteille"></span><select id="prep-bouteille"></select></label>
+        <label class="champ"><span data-t="prepQ"></span><select id="prep-q"><option>1</option><option>2</option><option>3</option></select></label>
+      </div>
+      <label class="bascule"><input type="checkbox" id="prep-echange" checked> <span data-t="echange"></span></label>
+      <label class="bascule"><input type="checkbox" id="prep-branchement" checked> <span data-t="branchement"></span></label>
+      <label class="bascule" id="prep-bloc-solidaire"><input type="checkbox" id="prep-solidaire"> <span data-t="solidaire"></span></label>
+      <label class="champ"><span data-t="langue"></span>
+        <select id="prep-langue"><option value="fr">Français</option><option value="ty">Reo tahiti</option><option value="both">Les deux</option></select>
+      </label>
+      <label class="champ"><span data-t="repere"></span><input type="text" id="prep-repere" maxlength="140"></label>
+      <label class="champ"><span data-t="prepPaiement"></span>
+        <select id="prep-paiement">
+          <option value="especes" data-t="especes"></option>
+          <option value="carte" data-t="carte"></option>
+          <option value="famille" data-t="paieFamille"></option>
+        </select>
+      </label>
+      <div id="prep-bloc-payeur" hidden>
+        <label class="champ"><span data-t="prepPayeurNom"></span><input type="text" id="prep-payeur-nom" maxlength="60"></label>
+        <label class="champ"><span data-t="prepPayeurTel"></span><input type="tel" id="prep-payeur-tel" maxlength="20" inputmode="tel"></label>
+        <p class="aide" data-t="aideFamille"></p>
+      </div>
+      <label class="champ"><span data-t="prepAbonnement"></span>
+        <select id="prep-abonnement">
+          <option value="0" data-t="aboNon"></option>
+          <option value="3" data-t="abo3"></option>
+          <option value="4" data-t="abo4"></option>
+          <option value="6" data-t="abo6"></option>
+          <option value="8" data-t="abo8"></option>
+        </select>
+      </label>
+      <p class="aide" data-t="prepCarte"></p>
+      <div id="carte-prep" class="carte"></div>
+      <p class="msg-erreur" id="prep-err" hidden></p>
+      <div class="boutons boutons-grands">
+        <button type="button" id="prep-fermer" class="btn secondaire" data-t="fermer"></button>
+        <button type="button" id="prep-creer" class="btn principal" data-t="prepCreer"></button>
+      </div>
+    </div>
+    <div id="prep-resultat" hidden>
+      <div id="carte-imprimable" class="carte-imprimable">
+        <p class="ci-titre">Fare Gaz · <span id="ci-prenom"></span></p>
+        <p class="ci-code"><span data-t="codeClient"></span> <b id="ci-code"></b></p>
+        <div id="prep-qr" class="prep-qr"></div>
+        <p class="ci-texte" data-t="prepScanner"></p>
+        <p class="ci-hotline">📞 <span data-t="aideTitre"></span> <b id="ci-numero"></b></p>
+      </div>
+      <p class="aide" data-t="prepPrive"></p>
+      <div class="boutons">
+        <button type="button" id="prep-partager" class="btn principal">📤 <span data-t="prepPartager"></span></button>
+        <button type="button" id="prep-copier" class="btn secondaire">📋 <span data-t="prepCopier"></span></button>
+        <button type="button" id="prep-imprimer" class="btn secondaire">🖨️ <span data-t="prepImprimer"></span></button>
+      </div>
+      <div class="boutons boutons-grands">
+        <button type="button" id="prep-retour" class="btn secondaire" data-t="sRetour"></button>
+        <button type="button" id="prep-fin" class="btn principal" data-t="fermer"></button>
+      </div>
+    </div>
+  </dialog>
+
   <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
   <script src="config.js"></script>
+  <script src="lib/qrcode.js"></script>
   <script src="langues.js"></script>
   <script src="app.js"></script>
 </body>

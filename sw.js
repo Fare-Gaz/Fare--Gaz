@@ -1,8 +1,8 @@
 // Service worker : garde l'application en cache pour qu'elle s'ouvre vite,
 // même avec une connexion faible. La carte, elle, a besoin d'Internet.
-const CACHE = "fare-gaz-v3";
+const CACHE = "fare-gaz-v5";
 const FICHIERS = [
-  "./", "index.html", "style.css", "app.js", "config.js", "langues.js", "manifest.json",
+  "./", "index.html", "style.css", "app.js", "config.js", "langues.js", "lib/qrcode.js", "manifest.json",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

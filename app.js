@@ -12,7 +12,7 @@
   // ================================================================ Stockage
   const CLES = {
     commandes: "faregaz.commandes", rappels: "faregaz.rappels", reglages: "faregaz.reglages",
-    client: "faregaz.client", mes: "faregaz.mesCommandes", prefs: "faregaz.preferences"
+    client: "faregaz.client", mes: "faregaz.mesCommandes", prefs: "faregaz.preferences", profil: "faregaz.profil", inscrits: "faregaz.inscrits"
   };
   const lire = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage plein ou bloqué */ } };
@@ -90,6 +90,7 @@
 
   function appliquerLangue() {
     document.documentElement.lang = prefs.langue === "ty" ? "ty" : "fr";
+    document.body.classList.toggle("bilingue", prefs.langue === "both");
     $$("[data-t]").forEach(el => { if (el.tagName === "OPTION") el.textContent = tOption(el.dataset.t); else el.innerHTML = th(el.dataset.t); });
     $("#repere").placeholder = t("reperePh");
     afficherMessagePoint();
@@ -140,7 +141,8 @@
   // ================================================================ Navigation
   const cartes = {};
   function afficherVue(id) {
-    const reelle = id === "v-commander" && prefs.facile ? "v-simple" : id;
+    const autre = sessionStorage.getItem("faregaz.autre");
+    const reelle = id === "v-commander" && profil && !autre ? "v-unbouton" : (id === "v-commander" && prefs.facile ? "v-simple" : id);
     $$(".vue").forEach(v => v.classList.toggle("active", v.id === reelle));
     $$(".onglets button").forEach(b => {
       const actif = b.dataset.vue === id;
@@ -150,12 +152,16 @@
     $("#barre-commande").hidden = reelle !== "v-commander";
     window.scrollTo(0, 0);
     if (reelle === "v-simple") rendreEtape();
+    if (reelle === "v-unbouton") rendreUnBouton();
     if (id === "v-suivi") rendreSuivi();
     if (id === "v-livreur" && sessionStorage.getItem("faregaz.livreur")) ouvrirLivreur();
     if (id === "v-gestion" && sessionStorage.getItem("faregaz.gestion")) ouvrirGestion();
     setTimeout(() => Object.values(cartes).forEach(m => m.invalidateSize()), 80);
   }
-  $$(".onglets button").forEach(b => b.addEventListener("click", () => afficherVue(b.dataset.vue)));
+  $$(".onglets button").forEach(b => b.addEventListener("click", () => {
+    if (b.dataset.vue === "v-commander") sessionStorage.removeItem("faregaz.autre");   // retour à l'accueil un bouton
+    afficherVue(b.dataset.vue);
+  }));
 
   // ================================================================ État de la commande (partagé entre les deux modes)
   const panier = {};
@@ -164,11 +170,12 @@
 
   const icoBouteille = `<svg class="ico" viewBox="0 0 40 52" aria-hidden="true"><rect x="13" y="2" width="14" height="6" rx="2" fill="#5d6d72"/><rect x="10" y="7" width="20" height="6" rx="3" fill="#7a8a8f"/><rect x="5" y="12" width="30" height="38" rx="9" fill="#0e7c86"/><path d="M20 22c-5 6-7 10-7 14a7 7 0 0 0 14 0c0-4-2-8-7-14z" fill="#f28c28"/><path d="M20 31c-2 2.5-3 4-3 5.5a3 3 0 0 0 6 0c0-1.5-1-3-3-5.5z" fill="#ffd166"/></svg>`;
 
-  function calcul({ echange, branchement, solidaire }) {
+  function calcul(opts) {
+    let { echange, branchement, solidaire } = opts;
     solidaire = CFG.tarifSolidaire.actif && solidaire;
     const lignes = []; let gaz = 0, consigne = 0, nb = 0;
     bouteilles().forEach(b => {
-      const q = panier[b.id] || 0; if (!q) return;
+      const q = (opts.panier || panier)[b.id] || 0; if (!q) return;
       nb += q; gaz += q * b.prix; if (!echange) consigne += q * b.consigne;
       lignes.push({ id: b.id, nom: b.nom, q, prix: b.prix, consigne: echange ? 0 : b.consigne });
     });
@@ -293,7 +300,7 @@
     return d;
   }
 
-  const LIB_PAIEMENT = () => ({ especes: "💵 " + t("especes"), carte: "💳 " + t("carte"), prise: "🤝 " + t("priseEnCharge") });
+  const LIB_PAIEMENT = () => ({ especes: "💵 " + t("especes"), carte: "💳 " + t("carte"), prise: "🤝 " + t("priseEnCharge"), famille: "👪 " + t("paieFamille") });
   function corpsConfirmation(c, d) {
     const lieu = d.point ? (d.repere ? `📍 ${esc(d.repere)}` : "📍 Point GPS sur la carte") : `🏠 ${esc(d.adresseTexte)}`;
     return `<table class="conf-lignes">
@@ -305,13 +312,14 @@
       <tr class="total"><td>${esc(t("total"))}</td><td>${fmt(c.total)}</td></tr></table>`;
   }
 
-  function creerCommande(d, c) {
+  function creerCommande(d, c, vueApres) {
     const base = {
       id: nouvelId("FG"), creeLe: Date.now(), statut: "recue",
       nom: d.nom, tel: d.tel, repere: d.repere || "", acces: d.acces || "facile", point: d.point, adresseTexte: d.adresseTexte || "",
       creneau: d.creneau || "asap", paiement: d.paiement, monnaie: d.monnaie || null, refPrise: d.refPrise || "",
       echange: c.echange, branchement: c.branchement, solidaire: c.solidaire,
-      lignes: c.lignes, frais: c.frais, fraisBr: c.fraisBr, consigne: c.consigne, total: c.total, langue: prefs.langue
+      lignes: c.lignes, frais: c.frais, fraisBr: c.fraisBr, consigne: c.consigne, total: c.total, langue: prefs.langue,
+      payeur: d.payeur || null, codeClient: d.codeClient || null, appelAvant: !!(d.appelAvant || c.solidaire)
     };
     Store.ajouter(base);
     const mes = lire(CLES.mes, []); mes.push(base.id); ecrire(CLES.mes, mes);
@@ -322,7 +330,7 @@
     etape = 1;
     rendreBouteilles(); rendreRecap(); majRecommande(); majBandeau();
     toast(t("merci"));
-    afficherVue("v-suivi");
+    afficherVue(vueApres || "v-suivi");
   }
 
   // Valide le formulaire normal : erreurs sous chaque champ, on descend jusqu'à la première
@@ -479,7 +487,7 @@
   const STATUTS = ["recue", "enroute", "livree", "annulee"];
   const libStatut = s => STATUTS.includes(s) ? t(s) : s;
   const resumeLignes = c => c.lignes.map(l => `${l.q} × ${esc(l.nom)}`).join(", ");
-  const PAIEMENT = { especes: "💵 Espèces", carte: "💳 Carte", prise: "🤝 Prise en charge" };
+  const PAIEMENT = { especes: "💵 Espèces", carte: "💳 Carte", prise: "🤝 Prise en charge", famille: "👪 Facture famille" };
   const ACCES = { facile: "Accès facile", escaliers: "Escaliers", pente: "Chemin en pente", servitude: "Servitude étroite" };
 
   function suiviVaa(statut) {
@@ -570,12 +578,19 @@
       return `<div class="commande">
         <div class="haut"><b>${i + 1}. ${esc(c.id)}</b><span class="badge ${esc(c.statut)}">${esc(t(c.statut))}</span></div>
         <div class="date">${heure(c.creeLe)} · ${esc(tOption({ asap: "crAsap", matin: "crMatin", midi: "crMidi", "apres-midi": "crApresMidi" }[c.creneau] || "crAsap"))}</div>
-        <p>${c.solidaire ? `<span class="badge opt">💛 Solidaire · prioritaire</span>` : ""}${c.branchement ? `<span class="badge opt">🔧 Branchement</span>` : ""}${c.acces && c.acces !== "facile" ? `<span class="badge opt">⚠ ${esc(ACCES[c.acces])}</span>` : ""}</p>
+        <p>${c.source === "telephone" ? `<span class="badge opt">📞 Par téléphone</span>` : ""}${c.source === "abonnement" ? `<span class="badge opt">📅 Livraison automatique</span>` : ""}${c.solidaire ? `<span class="badge opt">💛 Solidaire · prioritaire</span>` : ""}${c.branchement ? `<span class="badge opt">🔧 Branchement</span>` : ""}${c.acces && c.acces !== "facile" ? `<span class="badge opt">⚠ ${esc(ACCES[c.acces])}</span>` : ""}</p>
         <p><b>${esc(c.nom)}</b> · ${esc(c.tel)}</p>
         <p>${resumeLignes(c)} — ${c.echange ? "échange de bouteille vide" : "pas de bouteille vide (consigne)"}</p>
         ${c.adresseTexte ? `<p>🏠 ${esc(c.adresseTexte)}</p>` : ""}
         ${c.repere ? `<p>📌 ${esc(c.repere)}</p>` : ""}
-        <p><b>${fmt(c.total)}</b> · ${PAIEMENT[c.paiement] || ""}${c.refPrise ? ` n° ${esc(c.refPrise)}` : ""}${rendu > 0 ? ` · paie avec ${fmt(c.monnaie)} → rendre ${fmt(rendu)}` : ""}</p>
+        <p><b>${c.paiement === "famille" ? "Rien à encaisser" : fmt(c.total)}</b> · ${PAIEMENT[c.paiement] || ""}${c.payeur ? ` (${esc(c.payeur.nom)})` : ""}${c.codeClient ? ` · code ${esc(c.codeClient)}` : ""}${c.refPrise ? ` n° ${esc(c.refPrise)}` : ""}${rendu > 0 ? ` · paie avec ${fmt(c.monnaie)} → rendre ${fmt(rendu)}` : ""}</p>
+        ${c.statut !== "livree" && c.appelAvant ? `<div class="verif ${c.verifie ? "ok" : ""}">
+          ${c.verifie ? `✅ Présence vérifiée ${heure(c.verifie.le)}${c.verifie.note ? " · " + esc(c.verifie.note) : ""}` : `📞 <b>Appeler avant de livrer</b> : la personne est-elle là ? chien attaché ? portail ouvert ?
+          <input type="text" maxlength="100" placeholder="Note : chien attaché, passer par derrière…" data-note="${esc(c.id)}">
+          <div class="boutons"><a class="btn secondaire petit" href="tel:${esc(chiffres(c.tel))}">📞 Appeler</a>
+          <button type="button" class="btn principal petit" data-verifie="${esc(c.id)}">✔ Présence confirmée</button>
+          <button type="button" class="btn secondaire petit" data-absent="${esc(c.id)}">Absent : reporter</button></div>`}
+        </div>` : ""}
         ${c.statut !== "livree" ? `<div class="boutons">
           <a class="btn secondaire petit" href="https://www.google.com/maps/dir/?api=1&destination=${dest}" target="_blank" rel="noopener">🧭 Itinéraire</a>
           <a class="btn secondaire petit" href="tel:${esc(chiffres(c.tel))}">📞 Appeler</a>
@@ -588,12 +603,20 @@
   let enCours = null;
   $("#liste-livreur").addEventListener("click", e => {
     const bt = e.target.closest("button"); if (!bt) return;
+    if (bt.dataset.verifie) {
+      const note = document.querySelector(`[data-note="${bt.dataset.verifie}"]`)?.value.trim() || "";
+      Store.modifier(bt.dataset.verifie, { verifie: { le: Date.now(), note } }); rendreLivreur(); toast("Présence vérifiée.");
+    }
+    if (bt.dataset.absent) {
+      const note = document.querySelector(`[data-note="${bt.dataset.absent}"]`)?.value.trim() || "";
+      Store.modifier(bt.dataset.absent, { creeLe: Date.now(), reporte: (note ? note + " · " : "") + "absent au premier appel" }); rendreLivreur(); toast("Commande remise en fin de liste.");
+    }
     if (bt.dataset.partir) { Store.modifier(bt.dataset.partir, { statut: "enroute", partiLe: Date.now() }); rendreLivreur(); toast("Le client voit que tu es en route."); }
     if (bt.dataset.livrer) {
       const c = Store.commandes().find(x => x.id === bt.dataset.livrer); if (!c) return;
       enCours = c.id;
       $("#dlg-resume").innerHTML = `<b>${esc(c.id)}</b> — ${esc(c.nom)}<br>${resumeLignes(c)}<br>À encaisser : <b>${fmt(c.total)}</b>`;
-      $("#dlg-paye-txt").textContent = { carte: "Paiement par carte accepté", prise: `Bon / prise en charge vérifié (n° ${c.refPrise || "?"})` }[c.paiement] || `Espèces encaissées (${fmt(c.total)})`;
+      $("#dlg-paye-txt").textContent = { carte: "Paiement par carte accepté", prise: `Bon / prise en charge vérifié (n° ${c.refPrise || "?"})`, famille: `Rien à encaisser : facture à ${c.payeur?.nom || "la famille"}` }[c.paiement] || `Espèces encaissées (${fmt(c.total)})`;
       ["#dlg-paye", "#dlg-vide", "#dlg-branche"].forEach(s => { $(s).checked = false; });
       $("#dlg-vide-bloc").hidden = !c.echange; $("#dlg-branche-bloc").hidden = !c.branchement; $("#dlg-erreur").hidden = true;
       $("#dlg-livraison").showModal();
@@ -616,7 +639,7 @@
     e.preventDefault();
     if ($("#pin-gestion").value === CFG.pinGestion) { sessionStorage.setItem("faregaz.gestion", "1"); ouvrirGestion(); } else toast("Code incorrect.");
   });
-  function ouvrirGestion() { $("#login-gestion").hidden = true; $("#zone-gestion").hidden = false; rendreStats(); rendreRappels(); rendrePrix(); }
+  function ouvrirGestion() { $("#login-gestion").hidden = true; $("#zone-gestion").hidden = false; rendreStats(); rendreRappels(); rendrePrix(); rendreReguliers(); rendreInscrits(); rendreFamilles(); }
   function rendreStats() {
     if ($("#zone-gestion").hidden) return;
     const jour = Store.commandes().filter(c => estAujourdhui(c.creeLe) && c.statut !== "annulee");
@@ -628,7 +651,8 @@
       ["Encaissé", fmt(s(livrees.filter(c => c.paiement !== "prise"), c => c.total))], ["Prises en charge", fmt(s(livrees.filter(c => c.paiement === "prise"), c => c.total))],
       ["Branchements", jour.filter(c => c.branchement).length], ["Tarifs solidaires", jour.filter(c => c.solidaire).length],
       ["Espèces", fmt(s(livrees.filter(c => c.paiement === "especes"), c => c.total))], ["Carte", fmt(s(livrees.filter(c => c.paiement === "carte"), c => c.total))],
-      ["Rappels à faire", Store.rappels().filter(r => !r.fait).length], ["En reo tahiti", jour.filter(c => c.langue && c.langue !== "fr").length]
+      ["Rappels à faire", Store.rappels().filter(r => !r.fait).length], ["En reo tahiti", jour.filter(c => c.langue && c.langue !== "fr").length],
+      ["Par téléphone", jour.filter(c => c.source === "telephone").length], ["Livraisons automatiques", jour.filter(c => c.source === "abonnement").length]
     ];
     $("#stats").innerHTML = stats.map(([n, v]) => `<div class="stat"><b>${v}</b><small>${n}</small></div>`).join("");
   }
@@ -700,11 +724,332 @@
     rendreTout(); rendrePrix(); majRecommande(); toast("Données effacées.");
   });
 
+
+  // ================================================================ PROFIL PRÉPARÉ PAR UN PROCHE (lien ou QR code)
+  // Le lien contient le profil dans la partie après « # » : il n'est jamais envoyé à un serveur.
+  const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const dec = str => JSON.parse(decodeURIComponent(escape(atob(str.replace(/-/g, "+").replace(/_/g, "/")))));
+
+  function importerProfil() {
+    const m = location.hash.match(/^#p=([A-Za-z0-9_-]+)$/);
+    if (!m) return false;
+    let p;
+    try { p = dec(m[1]); } catch (e) { toast("Ce lien de préparation est abîmé."); return false; }
+    history.replaceState(null, "", location.pathname + location.search);   // on retire les données de l'adresse
+    const ids = CFG.bouteilles.map(b => b.id);
+    if (!p || typeof p.prenom !== "string" || !telValide(p.tel) || !ids.includes(p.b)) { toast("Ce lien de préparation est incomplet."); return false; }
+    const profilNouveau = {
+      prenom: p.prenom.slice(0, 40), tel: String(p.tel).slice(0, 20), bouteille: p.b, q: Math.min(Math.max(+p.q || 1, 1), 3),
+      echange: p.e !== 0, branchement: !!p.br, solidaire: !!p.s, repere: String(p.r || "").slice(0, 140),
+      point: (typeof p.lat === "number" && typeof p.lng === "number") ? { lat: p.lat, lng: p.lng, precision: null } : null,
+      paiement: ["especes", "carte", "famille"].includes(p.pa) ? p.pa : "especes",
+      payeur: p.pa === "famille" && p.pn ? { nom: String(p.pn).slice(0, 60), tel: String(p.pt || "").slice(0, 20) } : null,
+      abonnement: [0, 3, 4, 6, 8].includes(+p.ab) ? +p.ab : 0,
+      code: /^\d{4}$/.test(p.c || "") ? p.c : null, langue: p.l, inscritLe: Date.now()
+    };
+    ecrire(CLES.profil, profilNouveau);
+    inscrire(profilNouveau);
+    Object.assign(client, { nom: profilNouveau.prenom, tel: profilNouveau.tel, repere: profilNouveau.repere, point: profilNouveau.point });
+    ecrire(CLES.client, client);
+    prefs.facile = true;
+    if (["fr", "ty", "both"].includes(p.l)) prefs.langue = p.l;
+    ecrire(CLES.prefs, prefs);
+    return true;
+  }
+  const profilImporte = importerProfil();
+  let profil = lire(CLES.profil, null);
+
+  // ---------- Accueil un bouton
+  function panierProfil() { return { [profil.bouteille]: profil.q }; }
+  function rendreUnBouton() {
+    if (!profil) return;
+    $("#ub-titre").innerHTML = `${th("ubBonjour")} ${esc(profil.prenom)} !`;
+    const b = bouteilles().find(x => x.id === profil.bouteille) || bouteilles()[0];
+    const c = calcul({ echange: profil.echange, branchement: profil.branchement, solidaire: profil.solidaire, panier: panierProfil() });
+    $("#ub-carte").innerHTML = `${icoBouteille.replace('class="ico"', 'class="ico"')}
+      <div><b>${profil.q} × ${esc(b.nom)}</b><span class="prix">${fmt(c.total)}</span>
+      <small>${esc(t("ubMeme"))}${profil.branchement ? "<br>🔧 " + esc(t("branchement")) : ""}</small></div>`;
+    const enCoursCmd = mesCommandes().find(x => x.statut === "recue" || x.statut === "enroute");
+    $("#ub-suivi").innerHTML = enCoursCmd ? `<div class="commande"><div class="haut"><b>${esc(t(enCoursCmd.statut === "enroute" ? "bandeauEnCours" : "bandeauRecue"))}</b></div>${suiviVaa(enCoursCmd.statut)}</div>` : "";
+    $("#ub-appeler").href = "tel:" + chiffres(CFG.hotline.numero);
+    const infos = [];
+    if (profil.code) infos.push(`${esc(t("ubCode"))} <b>${esc(profil.code)}</b>`);
+    if (profil.abonnement) infos.push(`📅 ${esc(t("ubAbo"))} ${prochaineLivraison(profil).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`);
+    if (profil.payeur) infos.push(`👪 ${esc(t("ubFamille"))} ${esc(profil.payeur.nom)}`);
+    infos.push(`📞 ${esc(t("appelAvant"))}`);
+    $("#ub-infos").innerHTML = infos.join("<br>");
+    $("#ub-infos").hidden = !infos.length;
+  }
+  // Saisie du code à 4 chiffres : évite qu'un appui par hasard passe une commande
+  function demanderCode(code) {
+    return new Promise(resolve => {
+      const d = $("#dlg-code"); let saisie = "", essais = 0;
+      const points = () => $$("#code-points span").forEach((sp, i) => sp.classList.toggle("plein", i < saisie.length));
+      $("#code-err").hidden = true; points();
+      const fin = v => { d.close(); $("#clavier").onclick = null; resolve(v); };
+      $("#clavier").onclick = e => {
+        const bt = e.target.closest("button"); if (!bt) return;
+        if (bt.dataset.action === "annuler") return fin(false);
+        if (bt.dataset.action === "effacer") { saisie = saisie.slice(0, -1); points(); return; }
+        if (saisie.length >= 4) return;
+        saisie += bt.textContent.trim(); points();
+        if (saisie.length === 4) {
+          if (saisie === code) return setTimeout(() => fin(true), 150);
+          essais++; saisie = "";
+          setTimeout(points, 300);
+          const p = $("#code-err"); p.textContent = t(essais >= 3 ? "codeFaux3" : "codeFaux"); p.hidden = false;
+        }
+      };
+      d.oncancel = e => { e.preventDefault(); fin(false); };
+      d.showModal();
+    });
+  }
+  $("#ub-commander").addEventListener("click", async () => {
+    if (profil.code && !(await demanderCode(profil.code))) return;
+    const c = calcul({ echange: profil.echange, branchement: profil.branchement, solidaire: profil.solidaire, panier: panierProfil() });
+    const d = { nom: profil.prenom, tel: profil.tel, repere: profil.repere, acces: client.acces || "facile",
+      point: profil.point || client.point || null, adresseTexte: profil.point || client.point ? "" : profil.repere, creneau: "asap",
+      paiement: profil.paiement || "especes", payeur: profil.payeur, codeClient: profil.code, appelAvant: true };
+    const ok = await confirmer({ titre: t("sVerifie"), corps: corpsConfirmation(c, d), oui: "✔ " + esc(t("sOuiCommande")), non: esc(t("confNon")) });
+    if (!ok) return;
+    Object.assign(panier, panierProfil());
+    creerCommande(d, c, "v-commander");
+  });
+  $("#ub-autre").addEventListener("click", () => { sessionStorage.setItem("faregaz.autre", "1"); afficherVue("v-commander"); });
+
+  // ---------- Installation de l'icône sur l'écran d'accueil
+  let invitationInstall = null;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); invitationInstall = e; $("#in-installer").hidden = false; });
+  window.addEventListener("appinstalled", () => toast("L'icône Fare Gaz est sur l'écran d'accueil. Māuruuru !"));
+  $("#in-installer").addEventListener("click", async () => {
+    if (!invitationInstall) return;
+    invitationInstall.prompt();
+    await invitationInstall.userChoice.catch(() => {});
+    invitationInstall = null; $("#in-installer").hidden = true;
+  });
+  $("#in-ouvrir").addEventListener("click", () => afficherVue("v-commander"));
+  function ouvrirInstallation() {
+    $$(".vue").forEach(v => v.classList.toggle("active", v.id === "v-installer"));
+    $("#barre-commande").hidden = true;
+    $("#in-titre").textContent = `${t("inTitre")} ${profil.prenom} !`;
+  }
+
+  // ---------- Préparer le téléphone d'un proche
+  let prepPoint = null, carteprep = null, epinglePrep = null;
+  function remplirSelectBouteilles(sel) { sel.innerHTML = bouteilles().map(b => `<option value="${b.id}">${esc(b.nom)} — ${fmt(b.prix)}</option>`).join(""); }
+  function ouvrirPreparer() {
+    $("#panneau-affichage").hidden = true; $("#btn-affichage").setAttribute("aria-expanded", "false");
+    remplirSelectBouteilles($("#prep-bouteille"));
+    $("#prep-bloc-solidaire").hidden = !CFG.tarifSolidaire.actif;
+    $("#prep-formulaire").hidden = false; $("#prep-resultat").hidden = true; effacerErreur("#prep-err");
+    $("#dlg-preparer").showModal();
+    if (carteDispo && !carteprep) {
+      carteprep = L.map("carte-prep").setView(CFG.centreCarte, 12); tuiles(carteprep);
+      carteprep.on("click", e => {
+        prepPoint = { lat: +e.latlng.lat.toFixed(6), lng: +e.latlng.lng.toFixed(6) };
+        if (!epinglePrep) { epinglePrep = L.marker([prepPoint.lat, prepPoint.lng], { draggable: true }).addTo(carteprep); epinglePrep.on("dragend", () => { const q = epinglePrep.getLatLng(); prepPoint = { lat: +q.lat.toFixed(6), lng: +q.lng.toFixed(6) }; }); }
+        else epinglePrep.setLatLng([prepPoint.lat, prepPoint.lng]);
+      });
+    }
+    if (!carteDispo) $("#carte-prep").hidden = true;
+    setTimeout(() => carteprep && carteprep.invalidateSize(), 120);
+  }
+  $("#prep-paiement").addEventListener("change", () => { $("#prep-bloc-payeur").hidden = $("#prep-paiement").value !== "famille"; });
+  $("#btn-preparer").addEventListener("click", ouvrirPreparer);
+  $("#btn-preparer-gestion").addEventListener("click", ouvrirPreparer);
+  $("#prep-fermer").addEventListener("click", () => $("#dlg-preparer").close());
+  $("#prep-fin").addEventListener("click", () => $("#dlg-preparer").close());
+  $("#prep-retour").addEventListener("click", () => { $("#prep-formulaire").hidden = false; $("#prep-resultat").hidden = true; });
+  let lienPrep = "";
+  $("#prep-creer").addEventListener("click", () => {
+    const prenom = $("#prep-prenom").value.trim(), tel = $("#prep-tel").value.trim();
+    if (!prenom) return erreur("#prep-err", "errNom", $("#prep-prenom"));
+    if (!telValide(tel)) return erreur("#prep-err", "errTel", $("#prep-tel"));
+    effacerErreur("#prep-err");
+    const p = { v: 1, prenom, tel, b: $("#prep-bouteille").value, q: +$("#prep-q").value,
+      e: $("#prep-echange").checked ? 1 : 0, br: $("#prep-branchement").checked ? 1 : 0, s: $("#prep-solidaire").checked ? 1 : 0,
+      l: $("#prep-langue").value, r: $("#prep-repere").value.trim(),
+      pa: $("#prep-paiement").value, ab: +$("#prep-abonnement").value, c: codeLibre() };
+    if (p.pa === "famille") {
+      p.pn = $("#prep-payeur-nom").value.trim(); p.pt = $("#prep-payeur-tel").value.trim();
+      if (!p.pn) return erreur("#prep-err", "errNom", $("#prep-payeur-nom"));
+    }
+    if (prepPoint) { p.lat = prepPoint.lat; p.lng = prepPoint.lng; }
+    // Dans la démo, le registre du gazier est dans ce même navigateur
+    inscrire({ prenom, tel, bouteille: p.b, q: p.q, echange: !!p.e, branchement: !!p.br, solidaire: !!p.s, repere: p.r,
+      point: prepPoint, paiement: p.pa, payeur: p.pa === "famille" ? { nom: p.pn, tel: p.pt } : null, abonnement: p.ab, code: p.c, inscritLe: Date.now() });
+    $("#ci-code").textContent = p.c;
+    lienPrep = location.origin + location.pathname + "#p=" + enc(p);
+    $("#ci-prenom").textContent = prenom;
+    $("#ci-numero").textContent = CFG.hotline.numero;
+    if (typeof window.qrcode === "function") {
+      const qr = window.qrcode(0, "M"); qr.addData(lienPrep); qr.make();
+      $("#prep-qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    } else $("#prep-qr").textContent = lienPrep;
+    $("#prep-formulaire").hidden = true; $("#prep-resultat").hidden = false;
+  });
+  $("#prep-copier").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(lienPrep); toast("Lien copié."); } catch (e) { prompt("Copie ce lien :", lienPrep); }
+  });
+  $("#prep-partager").addEventListener("click", async () => {
+    const texte = "Fare Gaz : ouvre ce lien sur ton téléphone, l'application sera prête pour commander ta bouteille de gaz.";
+    if (navigator.share) { try { await navigator.share({ title: "Fare Gaz", text: texte, url: lienPrep }); } catch (e) { /* annulé */ } }
+    else { try { await navigator.clipboard.writeText(lienPrep); toast("Lien copié : colle-le dans un SMS ou WhatsApp."); } catch (e) { prompt("Copie ce lien :", lienPrep); } }
+  });
+  $("#prep-imprimer").addEventListener("click", () => window.print());
+
+
+  // ================================================================ REGISTRE DES CLIENTS PRÉ-ENREGISTRÉS (côté gazier)
+  function inscrits() { return lire(CLES.inscrits, []); }
+  function inscrire(p) {
+    if (!p.code) return;
+    const l = inscrits().filter(x => x.code !== p.code && chiffres(x.tel).slice(-8) !== chiffres(p.tel).slice(-8));
+    l.push(p); ecrire(CLES.inscrits, l);
+  }
+  function codeLibre() {
+    const pris = new Set(inscrits().map(x => x.code));
+    let c; do { c = String(Math.floor(1000 + Math.random() * 9000)); } while (pris.has(c));
+    return c;
+  }
+  function derniereLivraisonDe(ins) {
+    const d = chiffres(ins.tel).slice(-8);
+    const l = Store.commandes().filter(c => chiffres(c.tel).slice(-8) === d && c.statut !== "annulee").sort((a, b) => b.creeLe - a.creeLe)[0];
+    return l ? l.creeLe : null;
+  }
+  function prochaineLivraison(ins) {
+    const base = derniereLivraisonDe(ins) || ins.inscritLe || Date.now();
+    return new Date(base + (ins.abonnement || 0) * 7 * 864e5);
+  }
+  function commandeDepuisInscrit(ins, source) {
+    const c = calcul({ echange: ins.echange, branchement: ins.branchement, solidaire: ins.solidaire, panier: { [ins.bouteille]: ins.q } });
+    return {
+      id: nouvelId(source === "abonnement" ? "ABO" : "TEL"), creeLe: Date.now(), statut: "recue", source, nom: ins.prenom, tel: ins.tel,
+      repere: ins.point ? (ins.repere || "") : "", acces: "facile", point: ins.point || null, adresseTexte: ins.point ? "" : (ins.repere || ""),
+      creneau: "asap", paiement: ins.paiement || "especes", monnaie: null, refPrise: "", payeur: ins.payeur || null, codeClient: ins.code, appelAvant: true,
+      echange: c.echange, branchement: c.branchement, solidaire: c.solidaire, lignes: c.lignes,
+      frais: c.frais, fraisBr: c.fraisBr, consigne: c.consigne, total: c.total, langue: ins.langue || "fr"
+    };
+  }
+  const nomBouteille = id => (bouteilles().find(b => b.id === id) || {}).nom || id;
+  function rendreInscrits() {
+    const l = inscrits();
+    const auj = new Date(); auj.setHours(23, 59, 59, 999);
+    $("#liste-inscrits").innerHTML = l.length ? l.map(ins => {
+      const proch = ins.abonnement ? prochaineLivraison(ins) : null;
+      const du = proch && proch <= auj;
+      return `<div class="inscrit"><div class="haut"><b>${esc(ins.prenom)} · code ${esc(ins.code)}</b>${du ? `<span class="badge du">À livrer</span>` : ""}</div>
+        <small>${ins.q} × ${esc(nomBouteille(ins.bouteille))} · ${esc(ins.tel)}${ins.branchement ? " · branchement" : ""}${ins.solidaire ? " · solidaire" : ""}<br>
+        ${ins.abonnement ? `📅 Toutes les ${ins.abonnement} semaines · prochaine : ${proch.toLocaleDateString("fr-FR")}` : "Commande à la demande"}${ins.payeur ? ` · 👪 ${esc(ins.payeur.nom)}` : ""}</small>
+        <div class="boutons"><button type="button" class="btn secondaire petit" data-inscrit="${esc(ins.code)}">Commander maintenant</button></div></div>`;
+    }).join("") : `<p class="vide">Aucun client pré-enregistré. Utilise « Préparer le téléphone d'un client ».</p>`;
+  }
+  $("#liste-inscrits").addEventListener("click", e => {
+    const code = e.target.closest("[data-inscrit]")?.dataset.inscrit; if (!code) return;
+    const ins = inscrits().find(x => x.code === code); if (!ins) return;
+    enregistrerCommandeTel(commandeDepuisInscrit(ins, "telephone"));
+  });
+  $("#btn-abo-dues").addEventListener("click", () => {
+    const auj = new Date(); auj.setHours(23, 59, 59, 999);
+    const dus = inscrits().filter(ins => ins.abonnement && prochaineLivraison(ins) <= auj);
+    dus.forEach(ins => Store.ajouter(commandeDepuisInscrit(ins, "abonnement")));
+    rendreStats(); rendreInscrits(); rendreReguliers(); rendreLivreur(); rendreFamilles();
+    toast(dus.length ? `${dus.length} livraison(s) automatique(s) créée(s).` : "Aucune livraison automatique à faire aujourd'hui.");
+  });
+  function rendreFamilles() {
+    const now = new Date();
+    const duMois = Store.commandes().filter(c => c.paiement === "famille" && c.statut !== "annulee" &&
+      new Date(c.creeLe).getMonth() === now.getMonth() && new Date(c.creeLe).getFullYear() === now.getFullYear());
+    const parPayeur = {};
+    duMois.forEach(c => {
+      const k = c.payeur?.nom || "Famille";
+      parPayeur[k] = parPayeur[k] || { payeur: c.payeur, n: 0, total: 0, pour: new Set() };
+      parPayeur[k].n++; parPayeur[k].total += c.total; parPayeur[k].pour.add(c.nom);
+    });
+    const l = Object.entries(parPayeur);
+    $("#liste-familles").innerHTML = l.length ? l.map(([nom, f]) => `<div class="rappel"><div><b>${esc(nom)}</b>${f.payeur?.tel ? " · " + esc(f.payeur.tel) : ""}<br>
+      <small>Pour ${esc([...f.pour].join(", "))} · ${f.n} livraison${f.n > 1 ? "s" : ""}</small></div><b>${fmt(f.total)}</b></div>`).join("")
+      : `<p class="vide">Aucune livraison payée par une famille ce mois-ci.</p>`;
+  }
+
+  // ---------- Commande par téléphone avec le code client
+  $("#tc-code").addEventListener("input", () => {
+    const code = $("#tc-code").value.trim();
+    const ins = /^\d{4}$/.test(code) ? inscrits().find(x => x.code === code) : null;
+    if (!ins) { $("#tc-code-resultat").innerHTML = code.length === 4 ? `<p class="msg-erreur">Code inconnu.</p>` : ""; return; }
+    const c = commandeDepuisInscrit(ins, "telephone");
+    $("#tc-code-resultat").innerHTML = `<p><b>${esc(ins.prenom)}</b> · ${esc(ins.tel)}<br>${c.lignes.map(l => l.q + " × " + esc(l.nom)).join(", ")} · ${c.paiement === "famille" ? "facture " + esc(ins.payeur?.nom || "famille") : fmt(c.total)}</p>
+      <button type="button" class="btn principal large" id="tc-code-ok">✔ Commander pour ${esc(ins.prenom)}</button>`;
+    $("#tc-code-ok").onclick = () => { enregistrerCommandeTel(commandeDepuisInscrit(ins, "telephone")); $("#tc-code").value = ""; $("#tc-code-resultat").innerHTML = ""; };
+  });
+
+  // ================================================================ COMMANDE PAR TÉLÉPHONE (espace Gestion)
+  remplirSelectBouteilles($("#tc-bouteille"));
+  function derniereCommandeDe(tel) {
+    const d = chiffres(tel).slice(-8);
+    return Store.commandes().filter(c => chiffres(c.tel).slice(-8) === d && c.statut !== "annulee").sort((a, b) => b.creeLe - a.creeLe)[0];
+  }
+  $("#tc-tel").addEventListener("input", () => {
+    effacerErreur("#tc-err", $("#tc-tel"));
+    const der = telValide($("#tc-tel").value) ? derniereCommandeDe($("#tc-tel").value) : null;
+    $("#tc-connu").hidden = !der;
+    if (!der) return;
+    $("#tc-connu").textContent = `Client connu : ${der.nom}, dernière commande le ${heure(der.creeLe)}. Informations reprises.`;
+    $("#tc-nom").value = der.nom;
+    $("#tc-adresse").value = der.adresseTexte || der.repere || "";
+    if (der.lignes[0]) { $("#tc-bouteille").value = der.lignes[0].id; $("#tc-q").value = String(Math.min(der.lignes[0].q, 3)); }
+    $("#tc-echange").checked = der.echange; $("#tc-branchement").checked = der.branchement; $("#tc-solidaire").checked = der.solidaire;
+  });
+  function enregistrerCommandeTel(base) {
+    Store.ajouter(base);
+    rendreStats(); rendreReguliers(); rendreLivreur(); rendreInscrits(); rendreFamilles();
+    toast(`Commande ${base.id} enregistrée pour ${base.nom}.`);
+  }
+  $("#form-tel-commande").addEventListener("submit", e => {
+    e.preventDefault();
+    const tel = $("#tc-tel").value.trim(), nom = $("#tc-nom").value.trim(), adresse = $("#tc-adresse").value.trim();
+    if (!telValide(tel)) return erreur("#tc-err", "errTel", $("#tc-tel"));
+    if (!nom) return erreur("#tc-err", "errNom", $("#tc-nom"));
+    const der = derniereCommandeDe(tel);
+    if (!adresse && !der?.point) return erreur("#tc-err", "errAdresse", $("#tc-adresse"));
+    const opts = { echange: $("#tc-echange").checked, branchement: $("#tc-branchement").checked, solidaire: $("#tc-solidaire").checked,
+      panier: { [$("#tc-bouteille").value]: +$("#tc-q").value } };
+    const c = calcul(opts);
+    enregistrerCommandeTel({
+      id: nouvelId("TEL"), creeLe: Date.now(), statut: "recue", source: "telephone", nom, tel, appelAvant: true,
+      repere: der?.repere || "", acces: der?.acces || "facile", point: der?.point || null, adresseTexte: adresse,
+      creneau: "asap", paiement: $("#tc-paiement").value, monnaie: null, refPrise: "",
+      echange: c.echange, branchement: c.branchement, solidaire: c.solidaire, lignes: c.lignes,
+      frais: c.frais, fraisBr: c.fraisBr, consigne: c.consigne, total: c.total, langue: "fr"
+    });
+    e.target.reset(); $("#tc-connu").hidden = true; effacerErreur("#tc-err");
+  });
+  function rendreReguliers() {
+    const parTel = {};
+    Store.commandes().filter(c => c.statut !== "annulee").forEach(c => {
+      const k = chiffres(c.tel).slice(-8);
+      if (!parTel[k]) parTel[k] = { n: 0, der: c };
+      parTel[k].n++;
+      if (c.creeLe > parTel[k].der.creeLe) parTel[k].der = c;
+    });
+    const l = Object.values(parTel).sort((a, b) => b.n - a.n || b.der.creeLe - a.der.creeLe).slice(0, 12);
+    $("#liste-reguliers").innerHTML = l.length ? l.map(({ n, der }) => `
+      <div class="tc-regulier"><div><b>${esc(der.nom)}</b> · ${esc(der.tel)}<br><small>${resumeLignes(der)} · ${n} commande${n > 1 ? "s" : ""}</small></div>
+      <button type="button" class="btn principal petit" data-recommander="${esc(der.id)}">🔁 Recommander</button></div>`).join("")
+      : `<p class="vide">Pas encore de client.</p>`;
+  }
+  $("#liste-reguliers").addEventListener("click", e => {
+    const id = e.target.closest("[data-recommander]")?.dataset.recommander; if (!id) return;
+    const der = Store.commandes().find(c => c.id === id); if (!der) return;
+    if (!confirm(`Recommander pour ${der.nom} : ${der.lignes.map(l => l.q + " × " + l.nom).join(", ")} (${fmt(der.total)}) ?`)) return;
+    enregistrerCommandeTel({ ...der, id: nouvelId("TEL"), creeLe: Date.now(), statut: "recue", source: "telephone", partiLe: null, livreeLe: null, monnaie: null });
+  });
+
   // ================================================================ Rafraîchissement
   function rendreTout() {
     rendreBouteilles(); rendreRecap(); rendreSuivi(); rendreLivreur(); rendreStats(); majBandeau();
     if ($("#v-simple").classList.contains("active")) rendreEtape();
-    if (!$("#zone-gestion").hidden) rendreRappels();
+    if (!$("#zone-gestion").hidden) { rendreRappels(); rendreReguliers(); rendreInscrits(); rendreFamilles(); }
+    if ($("#v-unbouton").classList.contains("active")) rendreUnBouton();
   }
   window.addEventListener("storage", e => { if ([CLES.commandes, CLES.rappels].includes(e.key)) { rendreTout(); majRecommande(); } });
 
@@ -716,7 +1061,7 @@
   appliquerLangue();
   majRecommande();
   appliquerFacile();
-  afficherVue("v-commander");
+  if (profilImporte && profil) ouvrirInstallation(); else afficherVue("v-commander");
 
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

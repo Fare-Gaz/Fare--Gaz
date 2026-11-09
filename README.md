@@ -19,6 +19,19 @@ en français et en reo tahiti, avec un mode facile pour les personnes âgées.
 | En haut | **Affichage** (langue FR / reo tahiti / les deux, **mode simple matahiapo**, lecture à voix haute) et **Aide** (appel ou demande de rappel) |
 | 👵🏽 **Mode simple** | Pour les matahiapo : une question par écran (bouteille → lieu → coordonnées → vérification), gros boutons Suivant / Retour, « au même endroit que la dernière fois ? » |
 
+## Pour les matahiapo et ceux qui ont du mal avec les applications
+
+| Façon de commander | Comment ça marche |
+| --- | --- |
+| **Téléphone préparé** | Un proche ou le gazier ouvre **Affichage → Préparer le téléphone d'un proche** (ou **Gestion → Préparer le téléphone d'un client**), remplit prénom, téléphone, bouteille habituelle, adresse, paiement. L'app crée un **lien et un QR code**. Ouvert sur le téléphone du matahiapo, il prépare tout et propose d'**ajouter l'icône Fare Gaz sur l'écran d'accueil**. Ensuite, l'app s'ouvre sur un écran à **un seul gros bouton** : « Commander ma bouteille », protégé par le **code à 4 chiffres** pour éviter les commandes par erreur. |
+| **Appel de vérification** | Pour les matahiapo, le livreur appelle avant de venir : personne présente, chien attaché, portail ouvert. Il note la réponse sur la commande, ou la reporte si la personne est absente. |
+| **Par téléphone avec un code** | Chaque client préparé reçoit un **code à 4 chiffres** (imprimé sur sa carte). Il appelle la ligne d'aide, donne son code, et le gazier commande pour lui en un geste (**Gestion → Commande prise par téléphone**). |
+| **Livraison automatique** | Toutes les 3, 4, 6 ou 8 semaines. Le gazier voit les livraisons dues et les crée en un geste. |
+| **Payé par la famille** | Le livreur n'encaisse rien ; une facture mensuelle part au proche, réglée par virement permanent ou prélèvement (à mettre en place avec la banque). |
+| **Carte à imprimer** | QR code, code client et numéro d'aide, à coller sur le frigo. |
+
+Dans cette démonstration, le registre des clients pré-enregistrés est gardé dans le navigateur qui les prépare. Avec une base partagée, le gazier les verra quel que soit le téléphone utilisé.
+
 ## Mettre l'app en ligne avec GitHub Pages
 
 1. Ouvre ton dépôt `fare-gaz` sur GitHub (ou crée-le).
@@ -55,6 +68,7 @@ langues.js     textes en français et en reo tahiti
 manifest.json  installation sur téléphone
 sw.js          ouverture rapide et hors connexion
 icons/         icônes
+lib/qrcode.js  création des QR codes (licence MIT, Kazuhiko Arase)
 .nojekyll      pour GitHub Pages
 AUDIT.md       audits (technique v2, design et facilité d'utilisation v3)
 README.md      ce fichier
